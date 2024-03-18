@@ -1,0 +1,7 @@
+// &spi1 {
+//     //compatible = "nordic,nrf-spim";
+//     ls7366r: ls7366r {
+//         compatible = "ls7366r";
+//         cs-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+//     };
+// };

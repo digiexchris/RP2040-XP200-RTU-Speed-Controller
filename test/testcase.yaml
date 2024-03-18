@@ -1,0 +1,12 @@
+sample:
+  name: LeadscrewWarrantyVoider
+  description: LeadscrewWarrantyVoider Electronic Leadscrew
+tests:
+  Encoder.get_counter_period:
+    # build_only: true
+    tags: ELSTests
+    #platform_allow: qemu_cortex_m3
+  State.transition_to_turn:
+    # build_only: true
+    tags: ELSTests
+    #platform_allow: qemu_cortex_m3
