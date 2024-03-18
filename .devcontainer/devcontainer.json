@@ -1,34 +1,39 @@
 {
-  "build": {
-    "dockerfile": "./Dockerfile",
-    "tag": "eslf_tests/eslf_tests_build:0.1.0",
-    "name": "elsf/app-1",
-    "context": "."
-  },
+  "dockerFile": "Dockerfile",
+	// "build": {
+	// 	"args": {
+	// 		"WORKSPACE": "${containerWorkspaceFolder}"
+	// 	}
+	// },
+	"remoteUser": "user",
+
+	//"containerEnv": { "ZEPHYR_BASE": "${containerWorkspaceFolder}/zephyr" },
   "capAdd": [ "SYS_PTRACE" ],
   "customizations": {
-    "dockerComposeFile": "compose-dev.yml",
     "vscode": {
+      "settings": {
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash"
+          }
+        },
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
       "extensions": [
-        "llvm-vs-code-extensions.vscode-clangd",
         "twxs.cmake",
         "ms-vscode.cmake-tools",
-        "vadimcn.vscode-lldb",
         "GitHub.copilot",
         "GitHub.copilot-chat",
-        "ms-vscode.powershell",
         "actboy168.tasks",
         "ms-vscode.test-adapter-converter",
         "hbenl.vscode-test-explorer",
         "redhat.vscode-yaml",
         "IBM.output-colorizer",
         "ms-vscode.cpptools-themes",
-        "seaube.clangformat",
         "josetr.cmake-language-support-vscode",
         "derivitec-ltd.cmake-test-adapter",
         "tenninebt.vscode-koverage",
         "rherrmannr.code-coverage-lcov",
-        "SbastienLevy.covertops-cmake-llvm",
         "piotrkosek.vscode-gtest-test-adapter-with-code-lens",
         "SonarSource.sonarlint-vscode",
         "matepek.vscode-catch2-test-adapter",
@@ -36,7 +41,9 @@
         "spmeesseman.vscode-taskexplorer",
         "markis.code-coverage",
         "EditorConfig.EditorConfig",
-        "bierner.markdown-mermaid"
+        "bierner.markdown-mermaid",
+        "seaube.clangformat",
+        "msekoranja.clang-format-checker"
       ]
     }
   },
@@ -45,13 +52,12 @@
       "version": "latest",
       "ppa": "false"
     },
-    "ghcr.io/devcontainers/features/sshd:1": {}
+    "ghcr.io/devcontainers/features/sshd:1": {},
+    "ghcr.io/devcontainers/features/dotnet:2": {} //for some c++ extensions
   },
   "postAttachCommand": "sudo service ssh start",
   "forwardPorts": [ "2222:22" ],
-  "name": "Clang14",
-  "remoteUser": "vscode",
   "securityOpt": [ "seccomp=unconfined" ],
-  "workspaceFolder": "/ELSF",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/ELSF,type=bind"
+  // "workspaceFolder": "/workdir/els",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/Electronic-Leadscrew-Zephyr-RTOS,type=bind"
 }
