@@ -1,63 +1,128 @@
+/*
+ * Copyright (c) 2020 PHYTEC Messtechnik GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CONFIG_ZTEST
-
-#include "main.hpp"
 #include <zephyr/kernel.h>
-#include "State/State.hpp"
+#include <zephyr/sys/util.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/modbus/modbus.h>
 
-#include "Encoder/IEncoder.hpp"
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(mbc_sample, LOG_LEVEL_INF);
 
-#define ENCODER_UPDATE_TASK_PRIORITY -2 //high priority
-#define ENCODER_UPDATE_TASK_STACK_SIZE 128
+static int client_iface;
 
-#ifdef CONFIG_SPINDLE_ENCODER_TYPE_TEST
-    // Setup for TEST encoder
-    #define myEncoder nullptr
+const static struct modbus_iface_param client_param = {
+    .mode = MODBUS_MODE_RTU,
+    .rx_timeout = 50000,
+    .serial = {
+        .baud = 19200,
+        .parity = UART_CFG_PARITY_NONE,
+        .stop_bits_client = UART_CFG_STOP_BITS_2,
+    },
+};
 
-#elif CONFIG_SPINDLE_ENCODER_TYPE_LS7366
-    #include "Encoder/Driver/LS7366R.hpp"
-    LS7366R* myEncoder;
-    // Setup for LS7366 encoder
-#elif CONFIG_SPINDLE_ENCODER_TYPE_SDEC
+#define MODBUS_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(zephyr_modbus_serial)
 
-#else
-    #error "No encoder type selected, see Kconfig"
-    // Setup for SDEC encoder
-#endif
+static int init_modbus_client(void)
+{
+    const char iface_name[] = {DEVICE_DT_NAME(MODBUS_NODE)};
 
-// #if CONFIG_BOARD == stm32f411ce_blackpill
-//     #if CONFIG_BOARD != rpi_pico
-//         #error "Board mismatch, see README.md for supported boards"
-//     #endif
-// #endif
+    client_iface = modbus_iface_get_by_name(iface_name);
 
-K_THREAD_STACK_DEFINE(encoderUpdateTaskStack, ENCODER_UPDATE_TASK_STACK_SIZE);
-struct k_thread encoderUpdateTaskData;
-k_tid_t encoderUpdateThreadId;
-
-int main() {
-    #if USE_LS7366R_ENCODER
-        myEncoder = new LS7366R();
-        myEncoder->Init();
-    #endif
-
-    encoderUpdateThreadId = k_thread_create(
-        &encoderUpdateTaskData, 
-        encoderUpdateTaskStack,
-        K_THREAD_STACK_SIZEOF(encoderUpdateTaskStack),
-        UpdateEncoderTask,
-        myEncoder, NULL, NULL,
-        ENCODER_UPDATE_TASK_PRIORITY,
-        0, K_NO_WAIT);
+    return modbus_init_client(client_iface, client_param);
 }
 
+int main(void)
+{
+    uint16_t holding_reg[8] = {'H', 'e', 'l', 'l', 'o'};
+    const uint8_t coil_qty = 3;
+    uint8_t coil[1] = {0};
+    const int32_t sleep = 250;
+    static uint8_t node = 1;
+    int err;
 
-void UpdateEncoderTask(void *arg1, void *arg2, void *arg3) {
-    Encoder* encoder = static_cast<Encoder*>(arg1);
-    for (;;) {
-        encoder->Update();
-        //vTaskDelay(1*portTICK_PERIOD_MS);
+    if (init_modbus_client())
+    {
+        LOG_ERR("Modbus RTU client initialization failed");
+        return 0;
+    }
+
+    err = modbus_write_holding_regs(client_iface, node, 0, holding_reg,
+                                    ARRAY_SIZE(holding_reg));
+    if (err != 0)
+    {
+        LOG_ERR("FC16 failed with %d", err);
+        return 0;
+    }
+
+    err = modbus_read_holding_regs(client_iface, node, 0, holding_reg,
+                                   ARRAY_SIZE(holding_reg));
+    if (err != 0)
+    {
+        LOG_ERR("FC03 failed with %d", err);
+        return 0;
+    }
+
+    LOG_HEXDUMP_INF(holding_reg, sizeof(holding_reg),
+                    "WR|RD holding register:");
+
+    while (true)
+    {
+        uint16_t addr = 0;
+
+        err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
+        if (err != 0)
+        {
+            LOG_ERR("FC01 failed with %d", err);
+            return 0;
+        }
+
+        LOG_INF("Coils state 0x%02x", coil[0]);
+
+        err = modbus_write_coil(client_iface, node, addr++, true);
+        if (err != 0)
+        {
+            LOG_ERR("FC05 failed with %d", err);
+            return 0;
+        }
+
+        k_msleep(sleep);
+        err = modbus_write_coil(client_iface, node, addr++, true);
+        if (err != 0)
+        {
+            LOG_ERR("FC05 failed with %d", err);
+            return 0;
+        }
+
+        k_msleep(sleep);
+        err = modbus_write_coil(client_iface, node, addr++, true);
+        if (err != 0)
+        {
+            LOG_ERR("FC05 failed with %d", err);
+            return 0;
+        }
+
+        k_msleep(sleep);
+        err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
+        if (err != 0)
+        {
+            LOG_ERR("FC01 failed with %d", err);
+            return 0;
+        }
+
+        LOG_INF("Coils state 0x%02x", coil[0]);
+
+        coil[0] = 0;
+        err = modbus_write_coils(client_iface, node, 0, coil, coil_qty);
+        if (err != 0)
+        {
+            LOG_ERR("FC15 failed with %d", err);
+            return 0;
+        }
+
+        k_msleep(sleep);
     }
 }
-
-#endif // TESTING
