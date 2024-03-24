@@ -1,11 +1,13 @@
 {
+  //"image": "ghcr.io/zephyrproject-rtos/zephyr-build:latest",
   "dockerFile": "Dockerfile",
-	// "build": {
-	// 	"args": {
-	// 		"WORKSPACE": "${containerWorkspaceFolder}"
-	// 	}
-	// },
-	"remoteUser": "user",
+	"build": {
+		"args": {
+      "tag": "rp2040-xp200-rtu"
+			//"WORKSPACE": "${containerWorkspaceFolder}"
+		}
+	},
+	// "remoteUser": "user",
 
 	//"containerEnv": { "ZEPHYR_BASE": "${containerWorkspaceFolder}/zephyr" },
   "capAdd": [ "SYS_PTRACE" ],
@@ -51,13 +53,13 @@
     "ghcr.io/devcontainers/features/git:1": {
       "version": "latest",
       "ppa": "false"
-    },
-    "ghcr.io/devcontainers/features/sshd:1": {},
-    "ghcr.io/devcontainers/features/dotnet:2": {} //for some c++ extensions
+    }
+    // "ghcr.io/devcontainers/features/sshd:1": {},
+    //"ghcr.io/devcontainers/features/dotnet:2": {} //for some c++ extensions
   },
-  "postAttachCommand": "sudo service ssh start",
+  //"postAttachCommand": "sudo service ssh start",
   "forwardPorts": [ "2222:22" ],
   "securityOpt": [ "seccomp=unconfined" ],
-  // "workspaceFolder": "/workdir/els",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/Electronic-Leadscrew-Zephyr-RTOS,type=bind"
+  //"workspaceFolder": "/workspaces/local",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/local,type=bind"
 }

@@ -1,7 +1,111 @@
-// &spi1 {
-//     //compatible = "nordic,nrf-spim";
-//     ls7366r: ls7366r {
-//         compatible = "ls7366r";
-//         cs-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
-//     };
-// };
+/ {
+    buttons {
+        compatible = "gpio-keys";
+
+
+        // speedA: speed_A {
+        //     gpios = <&gpio0 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     label = "SpeedA";
+        // };
+
+        // speedB: speed_B {
+        //     gpios = <&gpio0 7 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     label = "SpeedB";
+            
+        // };
+
+        encSwitch: enc_Switch {
+            gpios = <&gpio0 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "EncSwitch";
+            
+        };
+
+        runF: run_F {
+            gpios = <&gpio0 8 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "RunF";
+            
+        };
+
+        runR: run_R {
+            gpios = <&gpio0 9 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "RunR";
+            
+        };
+
+        enable: enable {
+            gpios = <&gpio0 26 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Enable";
+            
+        };
+
+        jogf: jogF {
+            gpios = <&gpio0 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "JogF";
+            
+        };
+
+        jogr: jogR {
+            gpios = <&gpio0 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "JogR";
+            
+        };
+
+        estop: eStop {
+            gpios = <&gpio0 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "EStop";
+            
+        };
+
+        stop: Stop {
+            gpios = <&gpio0 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Stop";
+            
+        };
+    };
+
+    pinctrl {
+        // pio1_uart0_default: pio1_uart0_default {
+        //     rx_pins {
+        //         pinmux = <PIO1_P1>;
+        //         input-enable;
+        //         bias-pull-up;
+        //     };
+        //     tx_pins {
+        //         pinmux = <PIO1_P(GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     };
+        // };
+
+        pio1_uart1_default: pio1_uart1_default {
+            rx_pins {
+                pinmux = <PIO1_P2>;
+                input-enable;
+                bias-pull-up;
+            };
+            tx_pins {
+                pinmux = <PIO1_P3>;
+            };
+        };
+    };
+
+    pio1 {
+        status = "okay";
+
+        // pio1_uart0: uart0 {
+        //     pinctrl-0 = <&pio1_uart0_default>;
+        //     pinctrl-names = "default";
+
+        //     compatible = "raspberrypi,pico-uart-pio";
+        //     current-speed = <11520(GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     status = "okay";
+        // };
+
+        pio1_uart1: uart1 {
+            pinctrl-0 = <&pio1_uart1_default>;
+            pinctrl-names = "default";
+
+            compatible = "raspberrypi,pico-uart-pio";
+            current-speed = <11520>;
+            status = "okay";
+        };
+    };
+};

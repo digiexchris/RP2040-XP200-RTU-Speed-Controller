@@ -15,3 +15,6 @@ Speed controller interface for using an XP200 AC servo drive as a spindle in spe
 - add ZEPHYR_SDK to your environment variables for your user, this is the path to the bin dir that contains the zephyr gdb for arm
 - install qemu, add bin dir to path
 - use the Debug Tests launch configuration
+
+# State Machine
+Using QP/C++ for the application manageent including the state machine, and the state machine was generated with QM https://github.com/QuantumLeaps/qm/releases 

@@ -1,8 +1,0 @@
-[submodule "lib/ESLF"]
-	path = lib/ESLF
-	url = https://github.com/digiexchris/ESLF
-
-[submodule "lib/etl"]
-	path = lib/etl
-	url = https://github.com/ETLCPP/etl
-

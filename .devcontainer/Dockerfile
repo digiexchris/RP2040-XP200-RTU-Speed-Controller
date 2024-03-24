@@ -69,8 +69,9 @@ RUN west init /workspaces/zephyrproject && \
     west zephyr-export && \
     pip3 install --no-cache-dir -r /workspaces/zephyrproject/zephyr/scripts/requirements.txt && \
     rm -rf $(pip cache dir) && \
-    mkdir -m777 /workspaces/zephyrproject/zephyr/.cache && \
-    chown -R user:user /workspaces/zephyrproject
+    mkdir -m777 /workspaces/zephyrproject/zephyr/.cache 
+    #&& \
+    #chown -R user:user /workspaces/zephyrproject
 
 ## install nrfjprog and Segger JLink Tools
 RUN wget ${WGET_ARGS} https://www.nordicsemi.com/-/media/Software-and-other-downloads/Desktop-software/nRF-command-line-tools/sw/Versions-10-x-x/10-12-1/nRFCommandLineTools10121Linuxamd64.tar.gz && \

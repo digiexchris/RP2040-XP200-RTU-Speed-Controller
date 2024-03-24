@@ -107,7 +107,8 @@
 			"memory_resource": "cpp",
 			"string_view": "cpp",
 			"cinttypes": "cpp",
-			"ztest.h": "c"
+			"ztest.h": "c",
+			"hash_map": "cpp"
 		},
 		"cmake.enabledOutputParsers": [
 			"cmake",
@@ -142,88 +143,88 @@
 					"$gcc"
 				],
 			},
-			{
-				"label": "Build STM32",
-				"type": "shell",
-				"group": {
-					"kind": "build",
-					"isDefault": true
-				},
-				"command": "west",
-				"args": [
-					"build",
-					"-p",
-					"auto",
-					"-b",
-					"stm32f411ceu6-blackpill"
-				],
-				"problemMatcher": [
-					"$gcc"
-				],
-			},
-			{
-				"label": "Build Test",
-				"type": "shell",
-				"group": {
-					"kind": "build",
-					"isDefault": true
-				},
-				"command": "west",
-				"args": [
-					"build",
-					"-b",
-					"qemu_cortex_m3",
-					"--",
-					"-DCONFIG_ZTEST=y",
-				],
-				"options": {
-					"cwd": "${workspaceFolder}/"
-				  },
-				"problemMatcher": [
-					"$gcc"
-				],
-			},
-			{
-				"label": "Test",
-				"type": "shell",
-				"group": {
-					"kind": "test",
-					"isDefault": true
-				},
-				"command": "qemu-system-arm.exe",
-				"args": [
-					"-cpu",
-					"cortex-m3",
-					"-machine",
-					"lm3s6965evb",
-					"-nographic",
-					"-vga",
-					"none",
-					"-net",
-					"none",
-					"-pidfile",
-					"qemu.pid",
-					"-serial",
-					"mon:stdio",
-					"-semihosting",
-					"-kernel",
-					"build/zephyr/zephyr.elf"
-					// "build",
-					// "-b",
-					// "qemu_cortex_m3",
-					// "-t",
-					// "run"
-				],
-				"options": {
-					"cwd": "${workspaceFolder}/"
-				  },
-				"problemMatcher": [
-					"$gcc"
-				],
-				"dependsOn": [
-					"Build Test"
-				]
-			},
+			// {
+			// 	"label": "Build STM32",
+			// 	"type": "shell",
+			// 	"group": {
+			// 		"kind": "build",
+			// 		"isDefault": true
+			// 	},
+			// 	"command": "west",
+			// 	"args": [
+			// 		"build",
+			// 		"-p",
+			// 		"auto",
+			// 		"-b",
+			// 		"stm32f411ceu6-blackpill"
+			// 	],
+			// 	"problemMatcher": [
+			// 		"$gcc"
+			// 	],
+			// },
+			// {
+			// 	"label": "Build Test",
+			// 	"type": "shell",
+			// 	"group": {
+			// 		"kind": "build",
+			// 		"isDefault": true
+			// 	},
+			// 	"command": "west",
+			// 	"args": [
+			// 		"build",
+			// 		"-b",
+			// 		"qemu_cortex_m3",
+			// 		"--",
+			// 		"-DCONFIG_ZTEST=y",
+			// 	],
+			// 	"options": {
+			// 		"cwd": "${workspaceFolder}/"
+			// 	  },
+			// 	"problemMatcher": [
+			// 		"$gcc"
+			// 	],
+			// },
+			// {
+			// 	"label": "Test",
+			// 	"type": "shell",
+			// 	"group": {
+			// 		"kind": "test",
+			// 		"isDefault": true
+			// 	},
+			// 	"command": "qemu-system-arm.exe",
+			// 	"args": [
+			// 		"-cpu",
+			// 		"cortex-m3",
+			// 		"-machine",
+			// 		"lm3s6965evb",
+			// 		"-nographic",
+			// 		"-vga",
+			// 		"none",
+			// 		"-net",
+			// 		"none",
+			// 		"-pidfile",
+			// 		"qemu.pid",
+			// 		"-serial",
+			// 		"mon:stdio",
+			// 		"-semihosting",
+			// 		"-kernel",
+			// 		"build/zephyr/zephyr.elf"
+			// 		// "build",
+			// 		// "-b",
+			// 		// "qemu_cortex_m3",
+			// 		// "-t",
+			// 		// "run"
+			// 	],
+			// 	"options": {
+			// 		"cwd": "${workspaceFolder}/"
+			// 	  },
+			// 	"problemMatcher": [
+			// 		"$gcc"
+			// 	],
+			// 	"dependsOn": [
+			// 		"Build Test"
+			// 	]
+			// },
 			{
 				"label": "Clean",
 				"type": "shell",
