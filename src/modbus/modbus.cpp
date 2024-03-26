@@ -3,33 +3,14 @@
 Modbus::Modbus(const char *anIfaceName, const uint8_t aUnitId) : myIfaceName(anIfaceName), myUnitId(aUnitId)
 {
     myClientIface = modbus_iface_get_by_name(myIfaceName);
-    my if (modbus_init_client(myClientIface, myClientParam))
+    if (modbus_init_client(myClientIface, myClientParam))
     {
         LOG_ERR("Modbus RTU client initialization failed");
         // todo fire off an event to show it on the LCD if there is one. At least blink an LED
         return;
     }
 
-    if (modbus_register_user_fc(myClientIface, &EnableDriveFC))
-    {
-        LOG_ERR("Failed to register custom function for enable drive");
-        // todo fire off an event to show it on the LCD if there is one. At least blink an LED
-        return;
-    }
-
-    if (modbus_register_user_fc(myClientIface, &DisableDriveFC))
-    {
-        LOG_ERR("Failed to register custom function for disable drive");
-        // todo fire off an event to show it on the LCD if there is one. At least blink an LED
-        return;
-    }
-    // maybe this is for the server only, maybe the client has a better raw send
-    if (modbus_register_user_fc(myClientIface, &AClrFC))
-    {
-        LOG_ERR("Failed to register custom function for alarm clear");
-        // todo fire off an event to show it on the LCD if there is one. At least blink an LED
-        return;
-    }
+    k_timer_init(&myFrameEndTimer, UnlockEndOfFrame, NULL);
 }
 
 bool Modbus::IsDriveConnected()
@@ -39,13 +20,37 @@ bool Modbus::IsDriveConnected()
     if (result != 0x1234)
     {
         // TODO handle error
-        return result;
+        return false;
     }
 
-    return result;
+    return true;
 }
 
-uint16_t Modbus::ReadStatus(uint16_t address)
+
+bool Modbus::Start()
+{
+	WriteParam(WriteParams::Run, 1);
+}
+
+bool Modbus::Stop()
+{
+	WriteParam(WriteParams::Run, 0);
+}
+
+bool Modbus::SetSpeedDirection(int16_t aSpeed, bool aDirection = true)
+{
+	if(aSpeed > 0 && !aDirection)
+	{
+		aSpeed = 0 - aSpeed;
+	}
+
+	WriteParam(WriteParams::SetSpeed, aSpeed)
+	{
+
+	}
+}
+
+Packet Modbus::ReadStatus(uint16_t address)
 {
     uint8_t regs[1] = {0};
 
@@ -59,7 +64,7 @@ uint16_t Modbus::ReadStatus(uint16_t address)
     return result;
 }
 
-uint16_t Modbus::WriteParam(uint16_t address, uint16_t value)
+Packet Modbus::WriteParam(uint16_t address, uint16_t value)
 {
     uint16_t result = modbus_write_holding_reg(myClientIface, myUnitId, address, value);
     if (result != 0)
@@ -71,7 +76,7 @@ uint16_t Modbus::WriteParam(uint16_t address, uint16_t value)
     return result;
 };
 
-uint16_t Modbus::ReadParam(uint16_t address)
+Packet Modbus::ReadParam(uint16_t address)
 {
     uint8_t regs[1] = {0};
 
@@ -85,12 +90,12 @@ uint16_t Modbus::ReadParam(uint16_t address)
     return result;
 }
 
-uint16_t Modbus::EnableDrive()
+Packet Modbus::EnableDrive()
 {
     return modbus_raw_submit_rx(FunctionCode::WriteSingleCoil, 0x55);
 }
 
-uint16_t Modbus::DisableDrive()
+Packet Modbus::DisableDrive()
 {
     return WriteParam(FunctionCode::WriteSingleCoil, 0xAA);
 }

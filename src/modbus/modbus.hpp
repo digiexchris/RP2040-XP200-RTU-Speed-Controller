@@ -7,23 +7,6 @@
 
 #include <zephyr/logging/log.h>
 
-enum class Action // actions that the UI can accept and process
-{
-	EncSwitch = 0,
-	SetSpeed,
-	RunF,
-	RunR,
-	Stop,
-	Enable,
-	Disable,
-	ACLR, // alarm clear
-	JogF,
-	JogR,
-	EStop,
-	SaveParams, // to eeprom
-	Diag	    // responds with what you sent
-};
-
 // enum class FunctionCode : uint8_t //implemented in Zephyr's modbus lib, listed here so that the unsupported ones on the XP200 are known
 // {
 // 	ReadCoils = 0x01,		   // N/A on this unit
@@ -132,6 +115,14 @@ enum class ParamAddress : uint16_t // 0x0000 - 0x0027 via 0x03H
 	Reserved_7 = 0x0027
 };
 
+enum class WriteableParams //via 06h
+{
+	SetSpeedCommandSource = 0x0019,
+	Run = 0x0062,
+	SetRPM = 0x0089
+
+}
+
 struct Packet
 {
 	uint8_t functionCode;
@@ -139,50 +130,7 @@ struct Packet
 	uint16_t value;
 };
 
-MODBUS_CUSTOM_FC_DEFINE(EnableDriveFC, EnableDisableDrive, 0x42, 0x55);
-MODBUS_CUSTOM_FC_DEFINE(DisableDriveFC, EnableDisableDrive, 0x42, 0xAA);
-MODBUS_CUSTOM_FC_DEFINE(AClrFC, AlarmClear, 0x43, 0x00);
-
-// todo this is flipped, this is rx to the server, it needs to be sent from the client
-static bool AClrFC(const int iface,
-		   const struct modbus_adu *rx_adu,
-		   struct modbus_adu *tx_adu,
-		   uint8_t *const excep_code,
-		   void *const)
-{
-	const uint8_t request_len = 2;
-	const uint8_t response_len = 2;
-	uint8_t subfunc;
-	uint8_t data_len;
-}
-
-// todo this is flipped, this is rx to the server, it needs to be sent from the client
-static bool
-EnableDisableDrive(const int iface,
-		   const struct modbus_adu *rx_adu,
-		   struct modbus_adu *tx_adu,
-		   uint8_t *const excep_code,
-		   void *const user_data)
-{ // TODO this needs to be implemented to send the servo enable instead of incrementing a counter
-	const uint8_t request_len = 3;
-	const uint8_t response_len = 3;
-	int *value = (int *)user_data;
-	uint8_t subfunc;
-	uint8_t data_len;
-
-	// sys_put_be8(0x5555, tx_adu->data);   // Unit id?
-	sys_put_be8(0x42, &tx_adu->data[1]); // Function code?
-	sys_put_be8(value, &tx_adu->data[2]);
-	tx_adu->length = request_len;
-
-	if (rx_adu->data[1] == 0xC2)
-	{
-		// Error occurred, error value exists at data[2]
-		return false;
-	}
-
-	return true;
-}
+// note this drive requires at least 3.5 characters of wait time after the end of the frame
 
 class Modbus
 {
@@ -193,10 +141,22 @@ public:
 	Packet ReadStatus(uint16_t address);		     // AKA Read Input Registers (FC04)
 	Packet WriteParam(uint16_t address, uint16_t value); // AKA Write single holding register (FC06)
 	Packet ReadParam(uint16_t address);		     // AKA Read holding registers (FC03)
-	Packet EnableDrive();
-	Packet DisableDrive();
-
+	bool EnableDrive();
+	bool DisableDrive();
+	bool SetSpeedDirection(int16_t aSpeed, bool aDirection = true)
+	
 private:
+	struct k_timer myFrameEndTimer;
+	void UnlockEndOfFrame(struct k_timer *timer_id) {
+		if(endOfFrame)
+		{
+			unlock(endOfFrame);
+		}
+	};
+
+
+	const float FrameEndWait = 0.6*3.5;
+	std::mutex endOfFrame;
 	int myClientIface;
 	const char *myIfaceName;
 	const uint8_t myUnitId;
@@ -210,107 +170,4 @@ private:
 		    .stop_bits_client = UART_CFG_STOP_BITS_2,
 		},
 	};
-
-	// modbus_custom_fc_t modbusEnableDriveFC = {
-	//     .func = EnableDisableDrive,
-	//     .user_data = 0x55,
-	// };
-
-	// modbus_custom_fc_t modbusDisableDriveFC = {
-	//     .func = EnableDisableDrive,
-	//     .user_data = 0xAA,
-	// };
 };
-
-// LOG_MODULE_REGISTER(mbc_sample, LOG_LEVEL_INF);
-
-// #define MODBUS_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(zephyr_modbus_serial)
-
-// static
-
-//     int
-//     main(void)
-// {
-//     uint16_t holding_reg[8] = {'H', 'e', 'l', 'l', 'o'};
-//     const uint8_t coil_qty = 3;
-//     uint8_t coil[1] = {0};
-//     const int32_t sleep = 250;
-//     static uint8_t node = 1;
-//     int err;
-
-//     err = modbus_write_holding_regs(client_iface, node, 0, holding_reg,
-//                                     ARRAY_SIZE(holding_reg));
-//     if (err != 0)
-//     {
-//         LOG_ERR("FC16 failed with %d", err);
-//         return 0;
-//     }
-
-//     err = modbus_read_holding_regs(client_iface, node, 0, holding_reg,
-//                                    ARRAY_SIZE(holding_reg));
-//     if (err != 0)
-//     {
-//         LOG_ERR("FC03 failed with %d", err);
-//         return 0;
-//     }
-
-//     LOG_HEXDUMP_INF(holding_reg, sizeof(holding_reg),
-//                     "WR|RD holding register:");
-
-while (true)
-{
-	uint16_t addr = 0;
-
-	// err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
-	// if (err != 0)
-	// {
-	//     LOG_ERR("FC01 failed with %d", err);
-	//     return 0;
-	// }
-
-	// LOG_INF("Coils state 0x%02x", coil[0]);
-
-	// err = modbus_write_coil(client_iface, node, addr++, true);
-	// if (err != 0)
-	// {
-	//     LOG_ERR("FC05 failed with %d", err);
-	//     return 0;
-	// }
-
-	// k_msleep(sleep);
-	// err = modbus_write_coil(client_iface, node, addr++, true);
-	// if (err != 0)
-	// {
-	//     LOG_ERR("FC05 failed with %d", err);
-	//     return 0;
-	// }
-
-	// k_msleep(sleep);
-	// err = modbus_write_coil(client_iface, node, addr++, true);
-	// if (err != 0)
-	// {
-	//     LOG_ERR("FC05 failed with %d", err);
-	//     return 0;
-	// }
-
-	// k_msleep(sleep);
-	// err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
-	// if (err != 0)
-	// {
-	//     LOG_ERR("FC01 failed with %d", err);
-	//     return 0;
-	// }
-
-	// LOG_INF("Coils state 0x%02x", coil[0]);
-
-	// coil[0] = 0;
-	// err = modbus_write_coils(client_iface, node, 0, coil, coil_qty);
-	// if (err != 0)
-	// {
-	//     LOG_ERR("FC15 failed with %d", err);
-	//     return 0;
-	// }
-
-	k_msleep(sleep);
-}
-}
