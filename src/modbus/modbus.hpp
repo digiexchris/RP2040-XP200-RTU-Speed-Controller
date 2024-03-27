@@ -138,7 +138,7 @@ public:
 	/* first param is passed like DEVICE_DT_NAME(MODBUS_NODE) */
 	Modbus(const char *anIfaceName, const uint8_t aUnitId = 0x01);
 	bool IsDriveConnected();
-	Packet ReadStatus(uint16_t address);		     // AKA Read Input Registers (FC04)
+	Packet ReadStatus(uint16_t address);				 // AKA Read Input Registers (FC04)
 	Packet WriteParam(uint16_t address, uint16_t value); // AKA Write single holding register (FC06)
 	Packet ReadParam(uint16_t address);		     // AKA Read holding registers (FC03)
 	bool EnableDrive();
@@ -161,13 +161,13 @@ private:
 	const char *myIfaceName;
 	const uint8_t myUnitId;
 	const static struct modbus_iface_param myClientParam =
-	    {
-		.mode = MODBUS_MODE_RTU,
-		.rx_timeout = 50000,
-		.serial = {
-		    .baud = 19200,
-		    .parity = UART_CFG_PARITY_NONE,
-		    .stop_bits_client = UART_CFG_STOP_BITS_2,
-		},
+		{
+			.mode = MODBUS_MODE_RTU,
+			.rx_timeout = 50000,
+			.serial = {
+				.baud = 19200,
+				.parity = UART_CFG_PARITY_NONE,
+				.stop_bits_client = UART_CFG_STOP_BITS_2,
+			},
 	};
 };
