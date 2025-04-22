@@ -1,0 +1,17 @@
+{
+    "zephyr-workbench.westWorkspace": "/home/chris/XP200-RTU-HID",
+    "zephyr-workbench.board": "esp32s3_devkitc/esp32s3/appcpu",
+    "zephyr-workbench.sdk": "/home/chris/zephyr/zephyr-sdk-0.17.0",
+    "zephyr-workbench.build.pristine": "auto",
+    "zephyr-workbench.build.configurations": [
+        {
+            "name": "primary",
+            "board": "esp32s3_devkitc/esp32s3/appcpu",
+            "active": "true"
+        }
+    ],
+    "cmake.configureOnOpen": false,
+    "cmake.enableAutomaticKitScan": false,
+    "C_Cpp.default.compilerPath": "/home/chris/zephyr/zephyr-sdk-0.17.0/xtensa-undefined_zephyr-elf/bin/xtensa-undefined_zephyr-elf-gcc",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/primary/compile_commands.json"
+}
