@@ -1,0 +1,11 @@
+/*
+ * Generic Modbus node definition for the application
+ */
+
+/ {
+	modbus0: modbus0 {
+		status = "okay";
+		compatible = "zephyr,modbus-serial";
+		/* The uart property will be provided by board-specific overlays */
+	};
+};

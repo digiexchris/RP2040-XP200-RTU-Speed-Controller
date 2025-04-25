@@ -6,8 +6,12 @@
     "zephyr-workbench.build.configurations": [
         {
             "name": "primary",
-            "board": "esp32s3_devkitc/esp32s3/appcpu",
+            "board": "native_sim",
             "active": "true"
+        },
+        {
+            "name": "esp32-s3",
+            "board": "esp32s3_devkitc/esp32s3/appcpu"
         }
     ],
     "cmake.configureOnOpen": false,
