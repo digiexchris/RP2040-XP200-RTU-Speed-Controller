@@ -1,21 +1,22 @@
 / {
-	// uart0: uart {
-		//     status = "okay";
-		//     compatible = "zephyr,native-tty-uart";
-		//     current-speed = <115200>;
-		//     serial-port = "/dev/ttyUSB0";
-	// };
+
 
 	uart2: uart2 {
 		status = "okay";
 		compatible = "zephyr,native-tty-uart";
 		current-speed = <115200>;
-		serial-port = "/dev/pts/6";
+		serial-port = "/tmp/ttyS0";
+
+		myModbus: myModbus {
+			compatible = "zephyr,modbus-serial";
+			status = "okay";
+			// uart = <&uart2>;
+		};
 	};
 
-	modbus0: modbus0 {
-		compatible = "zephyr,modbus-serial";
-		uart = <&uart2>;
-		status = "okay";
+
+
+	chosen {
+		zephyr,modbus-serial = &myModbus;
 	};
 };

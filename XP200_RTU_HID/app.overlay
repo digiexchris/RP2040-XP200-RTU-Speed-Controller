@@ -3,7 +3,7 @@
  */
 
 / {
-	modbus0: modbus0 {
+	modbusClient: modbusClient {
 		status = "okay";
 		compatible = "zephyr,modbus-serial";
 		/* The uart property will be provided by board-specific overlays */

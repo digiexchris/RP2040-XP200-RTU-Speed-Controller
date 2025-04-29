@@ -54,11 +54,12 @@ const static struct modbus_iface_param client_param = {
     },
 };
 
-#define MODBUS_NODE DT_NODELABEL(modbus0)
+#define MODBUS_NODE DT_CHOSEN(zephyr_modbus_serial)
 
 static int init_modbus_client(void)
 {
     const char *iface_name = DEVICE_DT_NAME(MODBUS_NODE);
+
     client_iface = modbus_iface_get_by_name(iface_name);
     return modbus_init_client(client_iface, client_param);
 }
