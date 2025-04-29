@@ -1,124 +1,163 @@
 #include "modbus.hpp"
+#include "zephyr/kernel.h"
 
-Modbus::Modbus(const char *anIfaceName, const uint8_t aUnitId) : myIfaceName(anIfaceName), myUnitId(aUnitId)
+LOG_MODULE_REGISTER(modbus, LOG_LEVEL_DBG);
+
+#define MODBUS_NODE DT_CHOSEN(zephyr_modbus_serial)
+#define MODBUS_UART_NODE DT_PARENT(MODBUS_NODE)
+#define MODBUS_UART_SPEED DT_PROP(MODBUS_UART_NODE, current_speed)
+
+Modbus::Modbus(const char *anIfaceName, const uint32_t aUartSpeed, const uint32_t anRxTimeout, const uint8_t aUnitId) : myIfaceName(anIfaceName), myUnitId(aUnitId)
+
 {
-    myClientIface = modbus_iface_get_by_name(myIfaceName);
-    if (modbus_init_client(myClientIface, myClientParam))
-    {
-        LOG_ERR("Modbus RTU client initialization failed");
-        // todo fire off an event to show it on the LCD if there is one. At least blink an LED
-        return;
-    }
+    myClientParam.rx_timeout = anRxTimeout;
+    myClientParam.serial.baud = aUartSpeed;
 
-    k_timer_init(&myFrameEndTimer, UnlockEndOfFrame, NULL);
+    myClientIface = modbus_iface_get_by_name(myIfaceName.c_str());
+
+    assert(myClientIface >= 0);
+
+    myConnectPollingThreadStack = k_thread_stack_alloc(4096);
+
+    k_thread_create(NULL, myConnectPollingThreadStack,
+                    4096,
+                    ConnectLoop,
+                    this, NULL, NULL,
+                    5, K_ESSENTIAL, K_NO_WAIT);
+}
+
+void Modbus::ConnectLoop(void *p1, void *, void *)
+{
+
+    Modbus *instance = static_cast<Modbus *>(p1);
+
+    while (42)
+    {
+        if (!instance->myIsInitialized)
+        {
+            if (modbus_init_client(instance->myClientIface, instance->myClientParam))
+            {
+                LOG_ERR("Modbus RTU client initialization failed");
+                k_sleep(Z_TIMEOUT_MS(100));
+                continue;
+            }
+            instance->myIsInitialized = true;
+        }
+
+        if (instance->RequestDriveDiagnostics())
+        {
+            if (!instance->myIsConnected)
+
+            {
+                instance->myIsConnected = true;
+                LOG_INF("Drive reconnected");
+            }
+        }
+        else
+        {
+            LOG_ERR("Drive not connected");
+            instance->myIsConnected = false;
+            k_sleep(Z_TIMEOUT_MS(100));
+            continue;
+        }
+
+        k_sleep(Z_TIMEOUT_MS(500));
+    }
 }
 
 bool Modbus::IsDriveConnected()
 {
-    uint16_t result = modbus_request_diagnostic(myClientIface, myUnitId, 0x08, 0x1234);
+    return myIsConnected;
+}
+
+bool Modbus::RequestDriveDiagnostics()
+{
+    uint16_t result;
+    int err = modbus_request_diagnostic(myClientIface, myUnitId, 0x08, 0x1234, &result);
 
     if (result != 0x1234)
     {
-        // TODO handle error
         return false;
     }
 
     return true;
 }
 
+// bool Modbus::Start()
+// {
+//     if (!WriteParam(WriteableParams::Run, 1))
+//     {
+//         return false;
+//     }
+// }
 
-bool Modbus::Start()
+// bool Modbus::Stop()
+// {
+//     if (!WriteParam(WriteableParams::Run, 0))
+//     {
+//         return false;
+//     }
+// }
+
+// note: negative is reverse, positive is forwards, 0 is stop
+bool Modbus::SetSpeed(int16_t aSpeed)
 {
-	WriteParam(WriteParams::Run, 1);
-}
 
-bool Modbus::Stop()
-{
-	WriteParam(WriteParams::Run, 0);
-}
-
-bool Modbus::SetSpeedDirection(int16_t aSpeed, bool aDirection = true)
-{
-	if(aSpeed > 0 && !aDirection)
-	{
-		aSpeed = 0 - aSpeed;
-	}
-
-	WriteParam(WriteParams::SetSpeed, aSpeed)
-	{
-
-	}
+    if (!WriteParam(WriteableParams::SetRPM, aSpeed))
+    {
+        return false;
+    }
 }
 
 Packet Modbus::ReadStatus(uint16_t address)
 {
-    uint8_t regs[1] = {0};
+    uint16_t regs[1] = {0};
 
     uint16_t result = modbus_read_input_regs(myClientIface, myUnitId, address, regs, 1);
-    if (erresultr != 0)
+    if (result != 0)
     {
-        LOG_ERR("FC01 failed with %d", err);
-        return 0;
+        LOG_ERR("ReadInputRegisters failed with %d", err);
+        return Packet{FunctionCode::ReadInputRegisters, address, ERROR_VALUE};
     }
 
-    return result;
+    return Packet{FunctionCode::ReadInputRegisters, address, regs[0]};
 }
 
-Packet Modbus::WriteParam(uint16_t address, uint16_t value)
+bool Modbus::WriteParam(uint16_t address, uint16_t value)
 {
     uint16_t result = modbus_write_holding_reg(myClientIface, myUnitId, address, value);
     if (result != 0)
     {
-        LOG_ERR("FC06 failed with %d", err);
-        return result;
+        LOG_ERR("WriteSingleRegister failed with %d", err);
+        return false;
     }
 
-    return result;
+    return true;
 };
 
 Packet Modbus::ReadParam(uint16_t address)
 {
-    uint8_t regs[1] = {0};
+    uint16_t regs[1] = {0};
 
-    uint16_t result = modbus_read_holding_regs(myClientIface, myUnitId, address, regs, 1);
+    int result = modbus_read_holding_regs(myClientIface, myUnitId, address, regs, 1);
     if (result != 0)
     {
-        LOG_ERR("FC01 failed with %d", err);
-        return result;
+        LOG_ERR("ReadHoldingRegisters failed with %d", result);
+        return Packet{FunctionCode::ReadHoldingRegisters, address, ERROR_VALUE};
     }
 
-    return result;
+    return return Packet{FunctionCode::ReadInputRegisters, address, regs[0]};
 }
 
-Packet Modbus::EnableDrive()
+bool Modbus::EnableDrive()
 {
-    return modbus_raw_submit_rx(FunctionCode::WriteSingleCoil, 0x55);
+    // need tp find a way to send a function that's not in zephyr's function list. modbus_raw_something probably with a custom context.
+    return false;
+    // return modbus_raw_submit_rx(FunctionCode::WriteSingleCoil, 0x55);
 }
 
-Packet Modbus::DisableDrive()
+bool Modbus::DisableDrive()
 {
-    return WriteParam(FunctionCode::WriteSingleCoil, 0xAA);
+    return false;
+    // return WriteParam(FunctionCode::WriteSingleCoil, 0xAA);
 }
-
-//     uint16_t holding_reg[8] = {'H', 'e', 'l', 'l', 'o'};
-//     const uint8_t coil_qty = 3;
-//     uint8_t coil[1] = {0};
-//     const int32_t sleep = 250;
-//     static uint8_t node = 1;
-//     int err;
-
-//     err = modbus_write_holding_regs(client_iface, node, 0, holding_reg,
-//                                     ARRAY_SIZE(holding_reg));
-//     if (err != 0)
-//     {
-//         LOG_ERR("FC16 failed with %d", err);
-//         return 0;
-//     }
-
-//     err = modbus_read_holding_regs(client_iface, node, 0, holding_reg,
-//                                    ARRAY_SIZE(holding_reg));
-//     if (err != 0)
-//     {
-//         LOG_ERR("FC03 failed with %d", err);
-//         return 0;
-//     }

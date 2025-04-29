@@ -4,29 +4,63 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/modbus/modbus.h>
-
 #include <zephyr/logging/log.h>
+#include <string>
 
-// enum class FunctionCode : uint8_t //implemented in Zephyr's modbus lib, listed here so that the unsupported ones on the XP200 are known
-// {
-// 	ReadCoils = 0x01,		   // N/A on this unit
-// 	ReadDiscreteInputs = 0x02,	   // N/A on this unit
-// 	ReadHoldingRegisters = 0x03,	   // ie. parameters or options currently set, such as Speed Mode
-// 	ReadInputRegisters = 0x04,	   // ie. status of drive and motor such as Current RPM
-// 	WriteSingleCoil = 0x05,		   // N/A on this unit
-// 	WriteSingleRegister = 0x06,	   // ie. write single parameter
-// 	DiagnosticFunction = 0x08,	   // ie. echos back whatever is sent
-// 	WriteMultipleCoils = 0x0F,	   // N/A on this unit
-// 	WriteMultipleRegisters = 0x10,	   // ie. write multiple parameters
-// 	ReadWriteMultipleRegisters = 0x17, // N/A on this unit
-// 	MaskWriteRegister = 0x16,	   // N/A on this unit
-// 	ReadFIFOQueue = 0x18,		   // N/A on this unit
-// 	ReadDeviceIdentification = 0x2B,   // N/A on this unit
-// 	WriteParametersToEeprom = 0x41	   // N/A on this unit
-// };
-// }
+/*
+expected setup:
+PR025 = 1 (segmented speeds) // note, this will overwrite any pre-existing speed segments
+PR004 = 1 (speed mode)
+PR097 = 33 (fwd/reverse inhibit disabled) (or enable one if it should only turn in one direction)
+*/
 
-enum class StatusAddress : uint16_t // 0x1000 - 0x1027 via 0x04H
+enum class FunctionCode : uint8_t // implemented in Zephyr's modbus lib, listed here so that the unsupported ones on the XP200 are known
+{
+	ReadCoils = 0x01,					 // N/A on this unit
+	ReadDiscreteInputs = 0x02,			 // N/A on this unit
+	ReadHoldingRegisters = 0x03,		 // ie. parameters or options currently set, such as Speed Mode
+	ReadInputRegisters = 0x04,			 // ie. status of drive and motor such as Current RPM
+	WriteSingleCoil = 0x05,				 // N/A on this unit
+	WriteSingleRegister = 0x06,			 // ie. write single parameter
+	DiagnosticFunction = 0x08,			 // ie. echos back whatever is sent
+	WriteMultipleCoils = 0x0F,			 // N/A on this unit
+	WriteMultipleRegisters = 0x10,		 // ie. write multiple parameters
+	ReadWriteMultipleRegisters = 0x17,	 // N/A on this unit
+	MaskWriteRegister = 0x16,			 // N/A on this unit
+	ReadFIFOQueue = 0x18,				 // N/A on this unit
+	ReadDeviceIdentification = 0x2B,	 // N/A on this unit
+	WriteParametersToEeprom = 0x41,		 // custom function to save params to eeprom for the XP200
+	WriteParametersToEepromError = 0xc1, // custom exception to save params to eeprom for the XP200
+	EnableDisableDrive = 0x42,			 // custom function to enable or disable the drive
+	EnableDisableDriveError = 0xc2,		 // custom exception to enable or disable the drive
+	ResetAlarm = 0x43,					 // custom function to reset alarms
+	ResetAlarmError = 0xc3,				 // custom exception to reset alarms
+
+};
+
+// Conversion operator to allow implicit conversion from FunctionCode to uint8_t
+inline uint8_t operator+(FunctionCode code)
+{
+	return static_cast<uint8_t>(code);
+}
+
+// Conversion operator to allow implicit conversion from uint8_t to FunctionCode
+inline FunctionCode operator+(uint8_t code)
+{
+	return static_cast<FunctionCode>(code);
+}
+
+enum class ExceptionCode : uint8_t
+{
+	IllegalFunction = 0x01,
+	IllegalDataAddress = 0x02,
+	IllegalDataValue = 0x03,
+	SlaveDeviceFailure = 0x04,
+	Acknowledge = 0x05,
+	Unknown = 0xff,
+};
+
+enum class StatusAddress : uint16_t // 0x1000 - 0x1027 via 0x04H (aka ReadInputRegisters)
 {
 	MotorSpeed_r_min = 0x1000,
 	OriginalPositionLow = 0x1001,
@@ -70,7 +104,7 @@ enum class StatusAddress : uint16_t // 0x1000 - 0x1027 via 0x04H
 	Reserved_1027 = 0x1027
 };
 
-enum class ParamAddress : uint16_t // 0x0000 - 0x0027 via 0x03H
+enum class ParamAddress : uint16_t // 0x0000 - 0x0027 via 0x03H (aka ReadHoldingRegisters)
 {
 	MotorSpeed_RPM = 0x0000,
 	OriginalPositionInputPulseLower = 0x0001,
@@ -115,17 +149,19 @@ enum class ParamAddress : uint16_t // 0x0000 - 0x0027 via 0x03H
 	Reserved_7 = 0x0027
 };
 
-enum class WriteableParams //via 06h
+enum class WriteableParams // via 06h
 {
-	SetSpeedCommandSource = 0x0019,
-	Run = 0x0062,
-	SetRPM = 0x0089
+	// SetControlMode = 0x004,			// (PR004) Set the control mode
+	// SetSpeedCommandSource = 0x0019, // (PR025)
+	Run = 0x0062,	// (PR098) force enable/disable. if enabled with a zero speed it will maintain position.
+	SetRPM = 0x0089 // (PR137), the first RPM segment in speed mode. negative for reverse, positive for forwards, 0 for stop
+};
 
-}
+const uint16_t ERROR_VALUE = 0xFFFF; // used to indicate an error or invalid result
 
 struct Packet
 {
-	uint8_t functionCode;
+	FunctionCode functionCode;
 	uint16_t address;
 	uint16_t value;
 };
@@ -136,36 +172,36 @@ class Modbus
 {
 public:
 	/* first param is passed like DEVICE_DT_NAME(MODBUS_NODE) */
-	Modbus(const char *anIfaceName, const uint8_t aUnitId = 0x01);
-	bool IsDriveConnected();
-	Packet ReadStatus(uint16_t address);				 // AKA Read Input Registers (FC04)
-	Packet WriteParam(uint16_t address, uint16_t value); // AKA Write single holding register (FC06)
-	Packet ReadParam(uint16_t address);		     // AKA Read holding registers (FC03)
+	Modbus(const char *anIfaceName, const uint32_t aUartSpeed, const uint32_t anRxTimeout = 500000, const uint8_t aUnitId = 0x01);
+	bool RequestDriveDiagnostics();
+	Packet ReadStatus(uint16_t address);			   // AKA Read Input Registers (FC04)
+	bool WriteParam(uint16_t address, uint16_t value); // AKA Write single holding register (FC06)
+	Packet ReadParam(uint16_t address);				   // AKA Read holding registers (FC03)
 	bool EnableDrive();
 	bool DisableDrive();
-	bool SetSpeedDirection(int16_t aSpeed, bool aDirection = true)
-	
+	bool ResetAlarm();
+	bool SetSpeed(int16_t aSpeed);
+	bool WriteSettingsToEeprom();
+	bool IsDriveConnected();
+
 private:
-	struct k_timer myFrameEndTimer;
-	void UnlockEndOfFrame(struct k_timer *timer_id) {
-		if(endOfFrame)
-		{
-			unlock(endOfFrame);
-		}
-	};
+	static void ConnectLoop(struct k_thread *thread);
 
-
-	const float FrameEndWait = 0.6*3.5;
-	std::mutex endOfFrame;
+	struct k_thread myConnectPollingThread;
+	void *myConnectPollingThreadStack;
+	bool myIsInitialized = false;
+	bool myIsConnected = false;
+	const float FrameEndWait = 0.6 * 3.5;
 	int myClientIface;
-	const char *myIfaceName;
-	const uint8_t myUnitId;
-	const static struct modbus_iface_param myClientParam =
+	std::string myIfaceName;
+	uint8_t myUnitId;
+	const int myRxTimeout = 500000; // 500ms
+	struct modbus_iface_param myClientParam =
 		{
 			.mode = MODBUS_MODE_RTU,
-			.rx_timeout = 50000,
+			// .rx_timeout = 500000, set in constructor
 			.serial = {
-				.baud = 19200,
+				// .baud = 19200, set in constructor
 				.parity = UART_CFG_PARITY_NONE,
 				.stop_bits_client = UART_CFG_STOP_BITS_2,
 			},
