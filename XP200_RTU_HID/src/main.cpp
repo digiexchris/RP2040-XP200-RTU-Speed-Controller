@@ -50,7 +50,7 @@ static int client_iface;
 
 const static struct modbus_iface_param client_param = {
     .mode = MODBUS_MODE_RTU,
-    .rx_timeout = 50000,
+    .rx_timeout = 5000000,
     .serial = {
         .baud = MODBUS_UART_SPEED,
         .parity = UART_CFG_PARITY_NONE,
