@@ -44,17 +44,19 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 // const struct device *uart0 = DEVICE_DT_GET(DT_NODELABEL(uart0));
 static int client_iface;
 
+#define MODBUS_NODE DT_CHOSEN(zephyr_modbus_serial)
+#define MODBUS_UART_NODE DT_PARENT(MODBUS_NODE)
+#define MODBUS_UART_SPEED DT_PROP(MODBUS_UART_NODE, current_speed)
+
 const static struct modbus_iface_param client_param = {
     .mode = MODBUS_MODE_RTU,
     .rx_timeout = 50000,
     .serial = {
-        .baud = 19200,
+        .baud = MODBUS_UART_SPEED,
         .parity = UART_CFG_PARITY_NONE,
         .stop_bits_client = UART_CFG_STOP_BITS_2,
     },
 };
-
-#define MODBUS_NODE DT_CHOSEN(zephyr_modbus_serial)
 
 static int init_modbus_client(void)
 {
