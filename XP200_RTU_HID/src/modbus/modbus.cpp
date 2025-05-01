@@ -1,13 +1,15 @@
 #include "modbus.hpp"
 #include "zephyr/kernel.h"
 
-LOG_MODULE_REGISTER(modbus, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(modbus_app, LOG_LEVEL_DBG);
 
 #define MODBUS_NODE DT_CHOSEN(zephyr_modbus_serial)
 #define MODBUS_UART_NODE DT_PARENT(MODBUS_NODE)
 #define MODBUS_UART_SPEED DT_PROP(MODBUS_UART_NODE, current_speed)
 
-Modbus::Modbus(const char *anIfaceName, const uint32_t aUartSpeed, const uint32_t anRxTimeout, const uint8_t aUnitId) : myIfaceName(anIfaceName), myUnitId(aUnitId)
+// K_THREAD_STACK_DEFINE(modbusConnectPollingLoopStack, 4096);
+
+XP200RTU::XP200RTU(const char *anIfaceName, const uint32_t aUartSpeed, const uint32_t anRxTimeout, const uint8_t aUnitId) : myIfaceName(anIfaceName), myUnitId(aUnitId)
 
 {
     myClientParam.rx_timeout = anRxTimeout;
@@ -15,21 +17,25 @@ Modbus::Modbus(const char *anIfaceName, const uint32_t aUartSpeed, const uint32_
 
     myClientIface = modbus_iface_get_by_name(myIfaceName.c_str());
 
-    assert(myClientIface >= 0);
+    __ASSERT(myClientIface >= 0, "Invalid Modbus interface");
 
-    myConnectPollingThreadStack = k_thread_stack_alloc(4096);
+    myConnectPollingThreadStack = k_thread_stack_alloc(2048, 0); // Use 0 instead of K_USER when not using userspace
+    __ASSERT(myConnectPollingThreadStack != nullptr, "Failed to allocate thread stack");
 
-    k_thread_create(NULL, myConnectPollingThreadStack,
-                    4096,
+    myConnectPollingThread = new k_thread();
+    __ASSERT(myConnectPollingThread != nullptr, "Failed to allocate thread");
+
+    k_thread_create(myConnectPollingThread, myConnectPollingThreadStack,
+                    2048,
                     ConnectLoop,
                     this, NULL, NULL,
                     5, K_ESSENTIAL, K_NO_WAIT);
 }
 
-void Modbus::ConnectLoop(void *p1, void *, void *)
+void XP200RTU::ConnectLoop(void *p1, void *, void *)
 {
 
-    Modbus *instance = static_cast<Modbus *>(p1);
+    XP200RTU *instance = static_cast<XP200RTU *>(p1);
 
     while (42)
     {
@@ -61,19 +67,24 @@ void Modbus::ConnectLoop(void *p1, void *, void *)
             continue;
         }
 
-        k_sleep(Z_TIMEOUT_MS(500));
+        k_sleep(Z_TIMEOUT_MS(2500));
     }
 }
 
-bool Modbus::IsDriveConnected()
+bool XP200RTU::IsDriveConnected()
 {
     return myIsConnected;
 }
 
-bool Modbus::RequestDriveDiagnostics()
+bool XP200RTU::RequestDriveDiagnostics()
 {
     uint16_t result;
     int err = modbus_request_diagnostic(myClientIface, myUnitId, 0x08, 0x1234, &result);
+
+    if (err != 0)
+    {
+        return false;
+    }
 
     if (result != 0x1234)
     {
@@ -100,42 +111,44 @@ bool Modbus::RequestDriveDiagnostics()
 // }
 
 // note: negative is reverse, positive is forwards, 0 is stop
-bool Modbus::SetSpeed(int16_t aSpeed)
+bool XP200RTU::SetSpeed(int16_t aSpeed)
 {
 
     if (!WriteParam(WriteableParams::SetRPM, aSpeed))
     {
         return false;
     }
+
+    return true;
 }
 
-Packet Modbus::ReadStatus(uint16_t address)
+Packet XP200RTU::ReadStatus(uint16_t address)
 {
     uint16_t regs[1] = {0};
 
     uint16_t result = modbus_read_input_regs(myClientIface, myUnitId, address, regs, 1);
     if (result != 0)
     {
-        LOG_ERR("ReadInputRegisters failed with %d", err);
+        LOG_ERR("ReadInputRegisters failed with %d", result);
         return Packet{FunctionCode::ReadInputRegisters, address, ERROR_VALUE};
     }
 
     return Packet{FunctionCode::ReadInputRegisters, address, regs[0]};
 }
 
-bool Modbus::WriteParam(uint16_t address, uint16_t value)
+bool XP200RTU::WriteParam(uint16_t address, uint16_t value)
 {
     uint16_t result = modbus_write_holding_reg(myClientIface, myUnitId, address, value);
     if (result != 0)
     {
-        LOG_ERR("WriteSingleRegister failed with %d", err);
+        LOG_ERR("WriteSingleRegister failed with %d", result);
         return false;
     }
 
     return true;
 };
 
-Packet Modbus::ReadParam(uint16_t address)
+Packet XP200RTU::ReadParam(uint16_t address)
 {
     uint16_t regs[1] = {0};
 
@@ -146,17 +159,17 @@ Packet Modbus::ReadParam(uint16_t address)
         return Packet{FunctionCode::ReadHoldingRegisters, address, ERROR_VALUE};
     }
 
-    return return Packet{FunctionCode::ReadInputRegisters, address, regs[0]};
+    return Packet{FunctionCode::ReadInputRegisters, address, regs[0]};
 }
 
-bool Modbus::EnableDrive()
+bool XP200RTU::EnableDrive()
 {
     // need tp find a way to send a function that's not in zephyr's function list. modbus_raw_something probably with a custom context.
     return false;
     // return modbus_raw_submit_rx(FunctionCode::WriteSingleCoil, 0x55);
 }
 
-bool Modbus::DisableDrive()
+bool XP200RTU::DisableDrive()
 {
     return false;
     // return WriteParam(FunctionCode::WriteSingleCoil, 0xAA);

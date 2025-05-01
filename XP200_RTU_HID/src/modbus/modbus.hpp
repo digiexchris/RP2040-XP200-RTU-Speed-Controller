@@ -44,12 +44,6 @@ inline uint8_t operator+(FunctionCode code)
 	return static_cast<uint8_t>(code);
 }
 
-// Conversion operator to allow implicit conversion from uint8_t to FunctionCode
-inline FunctionCode operator+(uint8_t code)
-{
-	return static_cast<FunctionCode>(code);
-}
-
 enum class ExceptionCode : uint8_t
 {
 	IllegalFunction = 0x01,
@@ -149,13 +143,36 @@ enum class ParamAddress : uint16_t // 0x0000 - 0x0027 via 0x03H (aka ReadHolding
 	Reserved_7 = 0x0027
 };
 
-enum class WriteableParams // via 06h
+struct WriteableParams // via 06h
 {
+	uint16_t address;
+
+	constexpr WriteableParams(uint16_t addr = 0) : address(addr) {}
 	// SetControlMode = 0x004,			// (PR004) Set the control mode
 	// SetSpeedCommandSource = 0x0019, // (PR025)
-	Run = 0x0062,	// (PR098) force enable/disable. if enabled with a zero speed it will maintain position.
-	SetRPM = 0x0089 // (PR137), the first RPM segment in speed mode. negative for reverse, positive for forwards, 0 for stop
+	// Run = 0x0062,	// (PR098) force enable/disable. if enabled with a zero speed it will maintain position.
+	// SetRPM = 0x0089 // (PR137), the first RPM segment in speed mode. negative for reverse, positive for forwards, 0 for stop
+
+	static const WriteableParams INVALID; // used to indicate an error or invalid result
+	static const WriteableParams Run;	  // (PR098) force enable/disable. if enabled with a zero speed it will maintain position.
+	static const WriteableParams SetRPM;  // (PR137), the first RPM segment in speed mode. negative for reverse, positive for forwards, 0 for stop
+
+	constexpr operator uint16_t() const
+	{
+		return address;
+	}
 };
+
+// static const WriteableParams SetControlMode = {0x0004};		 // (PR004) Set the control mode
+// static const WriteableParams SetSpeedCommandSource = {0x0019}; // (PR025)
+static const WriteableParams INVALID = {0xFFFF}; // used to indicate an error or invalid result
+static const WriteableParams Run = {0x0062};	 // (PR098) force enable/disable. if enabled with a zero speed it will maintain position.
+static const WriteableParams SetRPM = {0x0089};	 // (PR137), the first RPM segment in speed mode. negative for reverse, positive for forwards, 0 for stop
+
+inline uint16_t operator+(WriteableParams code)
+{
+	return static_cast<uint16_t>(code);
+}
 
 const uint16_t ERROR_VALUE = 0xFFFF; // used to indicate an error or invalid result
 
@@ -168,11 +185,11 @@ struct Packet
 
 // note this drive requires at least 3.5 characters of wait time after the end of the frame
 
-class Modbus
+class XP200RTU
 {
 public:
 	/* first param is passed like DEVICE_DT_NAME(MODBUS_NODE) */
-	Modbus(const char *anIfaceName, const uint32_t aUartSpeed, const uint32_t anRxTimeout = 500000, const uint8_t aUnitId = 0x01);
+	XP200RTU(const char *anIfaceName, const uint32_t aUartSpeed, const uint32_t anRxTimeout = 500000, const uint8_t aUnitId = 0x01);
 	bool RequestDriveDiagnostics();
 	Packet ReadStatus(uint16_t address);			   // AKA Read Input Registers (FC04)
 	bool WriteParam(uint16_t address, uint16_t value); // AKA Write single holding register (FC06)
@@ -185,10 +202,10 @@ public:
 	bool IsDriveConnected();
 
 private:
-	static void ConnectLoop(struct k_thread *thread);
+	static void ConnectLoop(void *p1, void *, void *);
 
-	struct k_thread myConnectPollingThread;
-	void *myConnectPollingThreadStack;
+	struct k_thread *myConnectPollingThread;
+	k_thread_stack_t *myConnectPollingThreadStack;
 	bool myIsInitialized = false;
 	bool myIsConnected = false;
 	const float FrameEndWait = 0.6 * 3.5;

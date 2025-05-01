@@ -49,10 +49,12 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define MODBUS_UART_NODE DT_PARENT(MODBUS_NODE)
 #define MODBUS_UART_SPEED DT_PROP(MODBUS_UART_NODE, current_speed)
 
+const XP200RTU *modbusClient = nullptr;
+
 int main(void)
 {
-    // const char *modbusInterfaceName = DEVICE_DT_NAME(MODBUS_NODE);
-
+    const char *modbusInterfaceName = DEVICE_DT_NAME(MODBUS_NODE);
+    modbusClient = new XP200RTU(modbusInterfaceName, MODBUS_UART_SPEED);
     // uint16_t holding_reg[8] = {'H', 'e', 'l', 'l', 'o'};
     // const uint8_t coil_qty = 3;
     // uint8_t coil[1] = {0};
