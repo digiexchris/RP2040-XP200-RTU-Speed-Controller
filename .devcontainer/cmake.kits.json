@@ -1,0 +1,18 @@
+[
+    {
+      "name": "arm-zephyr-eabi",
+      "compilers": {
+        "C": "/opt/toolchains/zephyr-sdk-0.17.3/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
+        "CXX": "/opt/toolchains/zephyr-sdk-0.17.3/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++"
+      },
+      "isTrusted": true
+    },
+    {
+      "name": "clang",
+      "compilers": {
+        "C": "/usr/bin/clang",
+        "CXX": "/usr/bin/clang++"
+      },
+      "isTrusted": true
+    }
+]

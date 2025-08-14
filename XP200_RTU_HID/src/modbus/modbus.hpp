@@ -1,11 +1,19 @@
 #pragma once
 
-#include <zephyr/kernel.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/modbus/modbus.h>
-#include <zephyr/logging/log.h>
+#include "modbus_internal.h"
+#include <stdint.h>
 #include <string>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/modbus/modbus.h>
+#include <zephyr/sys/util.h>
+
+extern int mbc_validate_response_fc(struct modbus_context *ctx,
+									const uint8_t unit_id, uint8_t fc);
+extern int mbc_validate_rd_response(struct modbus_context *ctx,
+									const uint8_t unit_id, uint8_t fc,
+									uint8_t *data);
 
 /*
 expected setup:
@@ -14,35 +22,31 @@ PR004 = 1 (speed mode)
 PR097 = 33 (fwd/reverse inhibit disabled) (or enable one if it should only turn in one direction)
 */
 
-enum class FunctionCode : uint8_t // implemented in Zephyr's modbus lib, listed here so that the unsupported ones on the XP200 are known
+struct FunctionCode // implemented in Zephyr's modbus lib, listed here so that the unsupported ones on the XP200 are known
 {
-	ReadCoils = 0x01,					 // N/A on this unit
-	ReadDiscreteInputs = 0x02,			 // N/A on this unit
-	ReadHoldingRegisters = 0x03,		 // ie. parameters or options currently set, such as Speed Mode
-	ReadInputRegisters = 0x04,			 // ie. status of drive and motor such as Current RPM
-	WriteSingleCoil = 0x05,				 // N/A on this unit
-	WriteSingleRegister = 0x06,			 // ie. write single parameter
-	DiagnosticFunction = 0x08,			 // ie. echos back whatever is sent
-	WriteMultipleCoils = 0x0F,			 // N/A on this unit
-	WriteMultipleRegisters = 0x10,		 // ie. write multiple parameters
-	ReadWriteMultipleRegisters = 0x17,	 // N/A on this unit
-	MaskWriteRegister = 0x16,			 // N/A on this unit
-	ReadFIFOQueue = 0x18,				 // N/A on this unit
-	ReadDeviceIdentification = 0x2B,	 // N/A on this unit
-	WriteParametersToEeprom = 0x41,		 // custom function to save params to eeprom for the XP200
-	WriteParametersToEepromError = 0xc1, // custom exception to save params to eeprom for the XP200
-	EnableDisableDrive = 0x42,			 // custom function to enable or disable the drive
-	EnableDisableDriveError = 0xc2,		 // custom exception to enable or disable the drive
-	ResetAlarm = 0x43,					 // custom function to reset alarms
-	ResetAlarmError = 0xc3,				 // custom exception to reset alarms
+	static const uint8_t ReadCoils = 0x01;					  // N/A on this unit
+	static const uint8_t ReadDiscreteInputs = 0x02;			  // N/A on this unit
+	static const uint8_t ReadHoldingRegisters = 0x03;		  // ie. parameters or options currently set, such as Speed Mode
+	static const uint8_t ReadInputRegisters = 0x04;			  // ie. status of drive and motor such as Current RPM
+	static const uint8_t WriteSingleCoil = 0x05;			  // N/A on this unit
+	static const uint8_t WriteSingleRegister = 0x06;		  // ie. write single parameter
+	static const uint8_t DiagnosticFunction = 0x08;			  // ie. echos back whatever is sent
+	static const uint8_t WriteMultipleCoils = 0x0F;			  // N/A on this unit
+	static const uint8_t WriteMultipleRegisters = 0x10;		  // ie. write multiple parameters
+	static const uint8_t ReadWriteMultipleRegisters = 0x17;	  // N/A on this unit
+	static const uint8_t MaskWriteRegister = 0x16;			  // N/A on this unit
+	static const uint8_t ReadFIFOQueue = 0x18;				  // N/A on this unit
+	static const uint8_t ReadDeviceIdentification = 0x2B;	  // N/A on this unit
+	static const uint8_t WriteParametersToEeprom = 0x41;	  // custom function to save params to eeprom for the XP200
+	static const uint8_t WriteParametersToEepromError = 0xc1; // custom exception to save params to eeprom for the XP200
+	static const uint8_t EnableDisableDrive = 0x42;			  // custom function to enable or disable the drive
+	static const uint8_t EnableDisableDriveError = 0xc2;	  // custom exception to enable or disable the drive
+	static const uint8_t ResetAlarm = 0x43;					  // custom function to reset alarms
+	static const uint8_t ResetAlarmError = 0xc3;			  // custom exception to reset alarms
 
+	static const uint8_t EnableDrive = 0x55;
+	static const uint8_t DisableDrive = 0xAA;
 };
-
-// Conversion operator to allow implicit conversion from FunctionCode to uint8_t
-inline uint8_t operator+(FunctionCode code)
-{
-	return static_cast<uint8_t>(code);
-}
 
 enum class ExceptionCode : uint8_t
 {
@@ -178,7 +182,9 @@ const uint16_t ERROR_VALUE = 0xFFFF; // used to indicate an error or invalid res
 
 struct Packet
 {
-	FunctionCode functionCode;
+	Packet(uint8_t fc, uint16_t addr, uint16_t val)
+		: functionCode(fc), address(addr), value(val) {}
+	uint8_t functionCode;
 	uint16_t address;
 	uint16_t value;
 };
@@ -204,6 +210,11 @@ public:
 private:
 	static void ConnectLoop(void *p1, void *, void *);
 
+	bool SendCustomFunctionByte(uint8_t functionCode, uint8_t *data);
+
+	static int MbcSendCmd(modbus_context *ctx, const uint8_t unit_id,
+						  uint8_t fc, uint8_t *data);
+
 	struct k_thread *myConnectPollingThread;
 	k_thread_stack_t *myConnectPollingThreadStack;
 	bool myIsInitialized = false;
@@ -213,14 +224,22 @@ private:
 	std::string myIfaceName;
 	uint8_t myUnitId;
 	const int myRxTimeout = 500000; // 500ms
-	struct modbus_iface_param myClientParam =
+	modbus_iface_param myClientParam =
 		{
 			.mode = MODBUS_MODE_RTU,
 			// .rx_timeout = 500000, set in constructor
 			.serial = {
 				// .baud = 19200, set in constructor
 				.parity = UART_CFG_PARITY_NONE,
-				.stop_bits_client = UART_CFG_STOP_BITS_2,
+				.stop_bits = UART_CFG_STOP_BITS_2,
 			},
+	};
+
+	modbus_custom_fc myEnableDisableDriveFcConfig{
+		// sys_snode_t node;
+		// modbus_custom_cb_t cb;
+		// void *user_data;
+		// uint8_t fc;
+		// uint8_t excep_code;
 	};
 };

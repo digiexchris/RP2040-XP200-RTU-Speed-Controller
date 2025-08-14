@@ -1,4 +1,5 @@
 / {
+        // base pinctrl is include/zephyr/dt-bindings/pinctrl/rpi-pico-pinctrl-common.h
     buttons {
         compatible = "gpio-keys";
 
@@ -63,49 +64,41 @@
         };
     };
 
-    pinctrl {
-        // pio1_uart0_default: pio1_uart0_default {
-        //     rx_pins {
-        //         pinmux = <PIO1_P1>;
-        //         input-enable;
-        //         bias-pull-up;
-        //     };
-        //     tx_pins {
-        //         pinmux = <PIO1_P(GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-        //     };
-        // };
+    
+// &uart0 {
+// 	current-speed = <115200>;
+// 	status = "okay";
+// 	pinctrl-0 = <&uart0_default>;
+// 	pinctrl-names = "default";
+// };
 
-        pio1_uart1_default: pio1_uart1_default {
-            rx_pins {
-                pinmux = <PIO1_P2>;
+   
+
+    chosen {
+		zephyr,modbus-serial = &myModbus;
+	};
+}; 
+
+&pinctrl {
+        uart1_default: uart1_default {
+            group1 {
+                pinmux = <UART1_RX_P5>;
                 input-enable;
                 bias-pull-up;
             };
-            tx_pins {
-                pinmux = <PIO1_P3>;
+            group2 {
+                pinmux = <UART1_TX_P4>;
             };
         };
     };
 
-    pio1 {
+&uart1 {
+        pinctrl-0 = <&uart1_default>;
+        pinctrl-names = "default";
+        current-speed = <115200>;
         status = "okay";
-
-        // pio1_uart0: uart0 {
-        //     pinctrl-0 = <&pio1_uart0_default>;
-        //     pinctrl-names = "default";
-
-        //     compatible = "raspberrypi,pico-uart-pio";
-        //     current-speed = <11520(GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-        //     status = "okay";
-        // };
-
-        pio1_uart1: uart1 {
-            pinctrl-0 = <&pio1_uart1_default>;
-            pinctrl-names = "default";
-
-            compatible = "raspberrypi,pico-uart-pio";
-            current-speed = <11520>;
+        myModbus: myModbus {
+            compatible = "zephyr,modbus-serial";
             status = "okay";
         };
     };
-};

@@ -1,0 +1,57 @@
+{
+	"version": 3,
+	"configurePresets": [
+		{
+			"name": "default",
+			"displayName": "Default Config",
+			"description": "Default build using Ninja generator",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"BOARD": "$env{BOARD}",
+				"CMAKE_C_FLAGS_DEBUG": "-O0 -g",
+				"CMAKE_CXX_FLAGS_DEBUG": "-O0 -g"
+			}
+		},
+		{
+			"name": "release",
+			"displayName": "Release Config",
+			"description": "Release build using Ninja generator",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build-release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"BOARD": "$env{BOARD}"
+			}
+		},
+		{
+			"name": "xtensa sim",
+			"displayName": "xtensa sim Config",
+			"description": "xtensa sim build",
+			"inherits": "default",
+			"cacheVariables": {
+				"BOARD": "qemu_xtensa/dc233c "
+			}
+		},
+		{
+			"name": "rpi-pico",
+			"displayName": "Raspberry Pi Pico Config",
+			"description": "Raspberry Pi Pico build",
+			"inherits": "default",
+			"cacheVariables": {
+				"BOARD": "rpi_pico"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "default",
+			"configurePreset": "default"
+		},
+		{
+			"name": "release",
+			"configurePreset": "release"
+		}
+	]
+}

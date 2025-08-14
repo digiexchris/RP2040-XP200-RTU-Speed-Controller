@@ -5,18 +5,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/sys/printk.h>
 #include <inttypes.h>
 #include <zephyr/device.h>
-#include <zephyr/modbus/modbus.h>
 
-#include "ui/buttons.hpp"
-#include "modbus/CommandQueue.hpp"
+#include <zephyr/kernel.h>
+#include <zephyr/modbus/modbus.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/util.h>
+
 #include "modbus/modbus.hpp"
+#include "ui/buttons.hpp"
 
 #include <zephyr/logging/log.h>
 
@@ -53,88 +51,88 @@ const XP200RTU *modbusClient = nullptr;
 
 int main(void)
 {
-    const char *modbusInterfaceName = DEVICE_DT_NAME(MODBUS_NODE);
-    modbusClient = new XP200RTU(modbusInterfaceName, MODBUS_UART_SPEED);
-    // uint16_t holding_reg[8] = {'H', 'e', 'l', 'l', 'o'};
-    // const uint8_t coil_qty = 3;
-    // uint8_t coil[1] = {0};
-    // const int32_t sleep = 250;
-    // static uint8_t node = 1;
-    // int err;
+	const char *modbusInterfaceName = DEVICE_DT_NAME(MODBUS_NODE);
+	modbusClient = new XP200RTU(modbusInterfaceName, MODBUS_UART_SPEED);
+	// uint16_t holding_reg[8] = {'H', 'e', 'l', 'l', 'o'};
+	// const uint8_t coil_qty = 3;
+	// uint8_t coil[1] = {0};
+	// const int32_t sleep = 250;
+	// static uint8_t node = 1;
+	// int err;
 
-    // err = modbus_write_holding_regs(client_iface, node, 0, holding_reg,
-    //                                 ARRAY_SIZE(holding_reg));
-    // if (err != 0)
-    // {
-    //     LOG_ERR("FC16 failed with %d", err);
-    //     return 0;
-    // }
+	// err = modbus_write_holding_regs(client_iface, node, 0, holding_reg,
+	//                                 ARRAY_SIZE(holding_reg));
+	// if (err != 0)
+	// {
+	//     LOG_ERR("FC16 failed with %d", err);
+	//     return 0;
+	// }
 
-    // err = modbus_read_holding_regs(client_iface, node, 0, holding_reg,
-    //                                ARRAY_SIZE(holding_reg));
-    // if (err != 0)
-    // {
-    //     LOG_ERR("FC03 failed with %d", err);
-    //     return 0;
-    // }
+	// err = modbus_read_holding_regs(client_iface, node, 0, holding_reg,
+	//                                ARRAY_SIZE(holding_reg));
+	// if (err != 0)
+	// {
+	//     LOG_ERR("FC03 failed with %d", err);
+	//     return 0;
+	// }
 
-    // LOG_HEXDUMP_INF(holding_reg, sizeof(holding_reg),
-    //                 "WR|RD holding register:");
+	// LOG_HEXDUMP_INF(holding_reg, sizeof(holding_reg),
+	//                 "WR|RD holding register:");
 
-    while (true)
-    {
-        // uint16_t addr = 0;
+	while (42)
+	{
+		// uint16_t addr = 0;
 
-        // err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
-        // if (err != 0)
-        // {
-        //     LOG_ERR("FC01 failed with %d", err);
-        //     return 0;
-        // }
+		// err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
+		// if (err != 0)
+		// {
+		//     LOG_ERR("FC01 failed with %d", err);
+		//     return 0;
+		// }
 
-        // LOG_INF("Coils state 0x%02x", coil[0]);
+		// LOG_INF("Coils state 0x%02x", coil[0]);
 
-        // err = modbus_write_coil(client_iface, node, addr++, true);
-        // if (err != 0)
-        // {
-        //     LOG_ERR("FC05 failed with %d", err);
-        //     return 0;
-        // }
+		// err = modbus_write_coil(client_iface, node, addr++, true);
+		// if (err != 0)
+		// {
+		//     LOG_ERR("FC05 failed with %d", err);
+		//     return 0;
+		// }
 
-        // k_msleep(sleep);
-        // err = modbus_write_coil(client_iface, node, addr++, true);
-        // if (err != 0)
-        // {
-        //     LOG_ERR("FC05 failed with %d", err);
-        //     return 0;
-        // }
+		// k_msleep(sleep);
+		// err = modbus_write_coil(client_iface, node, addr++, true);
+		// if (err != 0)
+		// {
+		//     LOG_ERR("FC05 failed with %d", err);
+		//     return 0;
+		// }
 
-        // k_msleep(sleep);
-        // err = modbus_write_coil(client_iface, node, addr++, true);
-        // if (err != 0)
-        // {
-        //     LOG_ERR("FC05 failed with %d", err);
-        //     return 0;
-        // }
+		// k_msleep(sleep);
+		// err = modbus_write_coil(client_iface, node, addr++, true);
+		// if (err != 0)
+		// {
+		//     LOG_ERR("FC05 failed with %d", err);
+		//     return 0;
+		// }
 
-        k_msleep(500);
-        // int err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
-        // if (err != 0)
-        // {
-        //     LOG_ERR("FC01 failed with %d", err);
-        //     return 0;
-        // }
+		k_msleep(500);
+		// int err = modbus_read_coils(client_iface, node, 0, coil, coil_qty);
+		// if (err != 0)
+		// {
+		//     LOG_ERR("FC01 failed with %d", err);
+		//     return 0;
+		// }
 
-        // LOG_INF("Coils state 0x%02x", coil[0]);
+		// LOG_INF("Coils state 0x%02x", coil[0]);
 
-        // coil[0] = 0;
-        // err = modbus_write_coils(client_iface, node, 0, coil, coil_qty);
-        // if (err != 0)
-        // {
-        //     LOG_ERR("FC15 failed with %d", err);
-        //     return 0;
-        // }
+		// coil[0] = 0;
+		// err = modbus_write_coils(client_iface, node, 0, coil, coil_qty);
+		// if (err != 0)
+		// {
+		//     LOG_ERR("FC15 failed with %d", err);
+		//     return 0;
+		// }
 
-        // k_msleep(sleep);
-    }
+		// k_msleep(sleep);
+	}
 }
