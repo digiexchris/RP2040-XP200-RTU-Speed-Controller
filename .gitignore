@@ -10,3 +10,4 @@ cmake-build-debug/
 qemu.pid
 flash.bin
 firmware.bin
+.cache/

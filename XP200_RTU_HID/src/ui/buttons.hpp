@@ -1,22 +1,23 @@
-// #include <zephyr/kernel.h>
-// #include <zephyr/device.h>
-// #include <zephyr/drivers/gpio.h>
-// #include <zephyr/sys/util.h>
-// #include <zephyr/sys/printk.h>
-// #include <inttypes.h>
-// #include "modbus/CommandQueue.hpp"
 
-// class Button
-// {
-// public:
-//     Button(const struct gpio_dt_spec aButton, Action anAction) : myButton(aButton), myAction(anAction)
-//     {
-//         if (!gpio_is_ready_dt(&myButton))
-//         {
-//             printk("Error: button device %s is not ready\n",
-//                    myButton.port->name);
-//             return;
-//         }
+#include <inttypes.h>
+#include <zephyr/device.h>
+// #include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/util.h>
+
+// todo change this to emit actions to the zbus instead.
+//  class Button
+//  {
+//  public:
+//      Button(const struct gpio_dt_spec aButton, Action anAction) : myButton(aButton), myAction(anAction)
+//      {
+//          if (!gpio_is_ready_dt(&myButton))
+//          {
+//              printk("Error: button device %s is not ready\n",
+//                     myButton.port->name);
+//              return;
+//          }
 
 //         int err = gpio_pin_configure_dt(&myButton, GPIO_INPUT);
 //         if (err != 0)

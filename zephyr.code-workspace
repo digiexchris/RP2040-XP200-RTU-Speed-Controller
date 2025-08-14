@@ -144,7 +144,7 @@
 			"${zephyrBase}/../nrf/dts/bindings"
 		],
 		"[cpp]": {
-			"editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+			"editor.defaultFormatter": "seaube.clangformat"
 		}
 	},
 	"tasks": {
