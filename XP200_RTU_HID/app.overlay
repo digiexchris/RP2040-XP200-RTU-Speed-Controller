@@ -1,0 +1,12 @@
+/*
+ * Generic Modbus node definition for the application
+ */
+
+// / {
+	//     modbusClient: modbusClient {
+		//         status = "okay";
+		//         compatible = "zephyr,modbus-serial";
+		//         current-speed = <115200>;
+		//         /* The uart property will be provided by board-specific overlays */
+	//     };
+// };

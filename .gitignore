@@ -3,9 +3,11 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-.west/
 build/
 twister*/
 .idea/
 cmake-build-debug/
 qemu.pid
+flash.bin
+firmware.bin
+.cache/

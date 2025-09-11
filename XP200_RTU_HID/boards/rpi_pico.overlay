@@ -1,0 +1,104 @@
+/ {
+        // base pinctrl is include/zephyr/dt-bindings/pinctrl/rpi-pico-pinctrl-common.h
+    buttons {
+        compatible = "gpio-keys";
+
+
+        // speedA: speed_A {
+        //     gpios = <&gpio0 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     label = "SpeedA";
+        // };
+
+        // speedB: speed_B {
+        //     gpios = <&gpio0 7 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     label = "SpeedB";
+            
+        // };
+
+        encSwitch: enc_Switch {
+            gpios = <&gpio0 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "EncSwitch";
+            
+        };
+
+        runF: run_F {
+            gpios = <&gpio0 8 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "RunF";
+            
+        };
+
+        runR: run_R {
+            gpios = <&gpio0 9 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "RunR";
+            
+        };
+
+        enable: enable {
+            gpios = <&gpio0 26 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Enable";
+            
+        };
+
+        jogf: jogF {
+            gpios = <&gpio0 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "JogF";
+            
+        };
+
+        jogr: jogR {
+            gpios = <&gpio0 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "JogR";
+            
+        };
+
+        estop: eStop {
+            gpios = <&gpio0 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "EStop";
+            
+        };
+
+        stop: Stop {
+            gpios = <&gpio0 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Stop";
+            
+        };
+    };
+
+    
+// &uart0 {
+// 	current-speed = <115200>;
+// 	status = "okay";
+// 	pinctrl-0 = <&uart0_default>;
+// 	pinctrl-names = "default";
+// };
+
+   
+
+    chosen {
+		zephyr,modbus-serial = &myModbus;
+	};
+}; 
+
+&pinctrl {
+        uart1_default: uart1_default {
+            group1 {
+                pinmux = <UART1_RX_P5>;
+                input-enable;
+                bias-pull-up;
+            };
+            group2 {
+                pinmux = <UART1_TX_P4>;
+            };
+        };
+    };
+
+&uart1 {
+        pinctrl-0 = <&uart1_default>;
+        pinctrl-names = "default";
+        current-speed = <115200>;
+        status = "okay";
+        myModbus: myModbus {
+            compatible = "zephyr,modbus-serial";
+            status = "okay";
+        };
+    };

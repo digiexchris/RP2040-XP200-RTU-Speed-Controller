@@ -1,0 +1,22 @@
+/ {
+
+
+	uart2: uart2 {
+		status = "okay";
+		compatible = "zephyr,native-tty-uart";
+		current-speed = <115200>;
+		serial-port = "/tmp/ttyS0";
+
+		myModbus: myModbus {
+			compatible = "zephyr,modbus-serial";
+			status = "okay";
+			// uart = <&uart2>;
+		};
+	};
+
+
+
+	chosen {
+		zephyr,modbus-serial = &myModbus;
+	};
+};

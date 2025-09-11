@@ -1,0 +1,5 @@
+{
+    "cmake.languageSupport.enableFileAPI": true,
+    "cmake.sourceDirectory": "/workspaces/local/XP200_RTU_HID",
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/XP200_RTU_HID/build/compile_commands.json"
+}
