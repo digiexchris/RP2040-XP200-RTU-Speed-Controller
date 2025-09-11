@@ -199,6 +199,8 @@ bool XP200RTU::SendCustomFunctionByte(uint8_t functionCode, uint8_t *data)
 	{
 		return false;
 	}
+
+	return true;
 }
 
 bool XP200RTU::EnableDrive()

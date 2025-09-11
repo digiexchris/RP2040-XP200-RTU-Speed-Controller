@@ -1,7 +1,7 @@
 / {
         // base pinctrl is include/zephyr/dt-bindings/pinctrl/rpi-pico-pinctrl-common.h
     buttons {
-        compatible = "gpio-keys";
+        compatible = "zephyr,gpio-keys";
 
 
         // speedA: speed_A {
@@ -16,51 +16,52 @@
         // };
 
         encSwitch: enc_Switch {
+            status = "okay";
             gpios = <&gpio0 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "EncSwitch";
+            debounce-interval = <10>;
+            // linux,code = <KEY_ENTER>;
             
         };
 
         runF: run_F {
+            status = "okay";
             gpios = <&gpio0 8 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "RunF";
-            
+            debounce-interval = <10>;
+            // linux,code = <KEY_ARROW_RIGHT>;
         };
 
         runR: run_R {
+            status = "okay";
             gpios = <&gpio0 9 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "RunR";
-            
-        };
-
-        enable: enable {
-            gpios = <&gpio0 26 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-            label = "Enable";
-            
+            debounce-interval = <10>;
+            // linux,code = <KEY_ARROW_LEFT>;
         };
 
         jogf: jogF {
+            status = "okay";
             gpios = <&gpio0 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "JogF";
-            
+            debounce-interval = <10>;
+            // linux,code = <KEY_UP>;
         };
 
         jogr: jogR {
+            status = "okay";
             gpios = <&gpio0 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "JogR";
-            
+            debounce-interval = <10>;
+            // linux,code = <KEY_DOWN>;
         };
 
         estop: eStop {
+            status = "okay";
             gpios = <&gpio0 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "EStop";
-            
-        };
-
-        stop: Stop {
-            gpios = <&gpio0 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-            label = "Stop";
-            
+            debounce-interval = <10>;
+            // linux,code = <KEY_ESC>;
         };
     };
 
@@ -102,3 +103,4 @@
             status = "okay";
         };
     };
+    

@@ -1,9 +1,9 @@
-#include "machine.hpp"
+// #include "machine.hpp"
 
-Machine *Machine::myInstance = nullptr;
+// Machine *Machine::myInstance = nullptr;
 
-Machine::Machine()
-{
-    myHIDState = new HIDState();
-    myDriveState = new DriveState();
-}
+// Machine::Machine()
+// {
+//     myHIDState = new HIDState();
+//     myDriveState = new DriveState();
+// }

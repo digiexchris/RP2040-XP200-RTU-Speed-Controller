@@ -22,25 +22,6 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 #define SLEEP_TIME_MS 1
 
-/*
- * Get button configuration from the devicetree sw0 alias. This is mandatory.
- */
-// #define EncSwitch_NODE DT_ALIAS(EncSwitch)
-// #if !DT_NODE_HAS_STATUS(EncSwitch_NODE, okay)
-// #error "Unsupported board: sw0 devicetree alias is not defined"
-// #endif
-
-// static const struct Button buttons[] = {
-//     {GPIO_DT_SPEC_GET_OR(EncSwitch, gpios, {0}), Action::EncSwitch},
-//     {GPIO_DT_SPEC_GET_OR(RunF, gpios, {0}), Action::RunF},
-//     {GPIO_DT_SPEC_GET_OR(RunR, gpios, {0}), Action::RunR},
-//     {GPIO_DT_SPEC_GET_OR(Stop, gpios, {0}), Action::Stop},
-//     {GPIO_DT_SPEC_GET_OR(Enable, gpios, {0}), Action::Enable},
-//     {GPIO_DT_SPEC_GET_OR(JogF, gpios, {0}), Action::JogF},
-//     {GPIO_DT_SPEC_GET_OR(JogR, gpios, {0}), Action::JogR},
-//     {GPIO_DT_SPEC_GET_OR(EStop, gpios, {0}), Action::EStop},
-// };
-
 // const struct device *uart0 = DEVICE_DT_GET(DT_NODELABEL(uart0));
 
 #define MODBUS_NODE DT_CHOSEN(zephyr_modbus_serial)
@@ -49,8 +30,11 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 const XP200RTU *modbusClient = nullptr;
 
+const Buttons *buttons = nullptr;
+
 int main(void)
 {
+
 	const char *modbusInterfaceName = DEVICE_DT_NAME(MODBUS_NODE);
 	modbusClient = new XP200RTU(modbusInterfaceName, MODBUS_UART_SPEED);
 	// uint16_t holding_reg[8] = {'H', 'e', 'l', 'l', 'o'};
@@ -78,6 +62,8 @@ int main(void)
 
 	// LOG_HEXDUMP_INF(holding_reg, sizeof(holding_reg),
 	//                 "WR|RD holding register:");
+
+	buttons = Buttons::GetInstance();
 
 	while (42)
 	{

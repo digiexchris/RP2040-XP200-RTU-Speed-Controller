@@ -1,60 +1,67 @@
+#pragma once
 
-#include <inttypes.h>
-#include <zephyr/device.h>
-// #include <zephyr/drivers/gpio.h>
-#include <zephyr/kernel.h>
-#include <zephyr/sys/printk.h>
-#include <zephyr/sys/util.h>
+#include <cstdint>
+#include <unordered_map>
+#include <zephyr/logging/log.h>
 
-// todo change this to emit actions to the zbus instead.
-//  class Button
-//  {
-//  public:
-//      Button(const struct gpio_dt_spec aButton, Action anAction) : myButton(aButton), myAction(anAction)
-//      {
-//          if (!gpio_is_ready_dt(&myButton))
-//          {
-//              printk("Error: button device %s is not ready\n",
-//                     myButton.port->name);
-//              return;
-//          }
+#include "button.hpp"
+#include "buttonbit.hpp"
 
-//         int err = gpio_pin_configure_dt(&myButton, GPIO_INPUT);
-//         if (err != 0)
-//         {
-//             printk("Error %d: failed to configure %s pin %d\n",
-//                    err, myButton.port->name, myButton.pin);
-//             return;
-//         }
+using ButtonList = std::unordered_map<ButtonBit, class Button *>;
 
-//         err = gpio_pin_interrupt_configure_dt(&myButton,
-//                                               GPIO_INT_EDGE_TO_ACTIVE);
-//         if (err != 0)
-//         {
-//             printk("Error %d: failed to configure interrupt on %s pin %d\n",
-//                    err, myButton.port->name, myButton.pin);
-//             return;
-//         }
+extern struct zbus_channel BUTTONS;
 
-//         gpio_init_callback(&myButtonCallback, ISR, BIT(myButton.pin));
-//         gpio_add_callback(myButton.port, &myButtonCallback);
-//         printk("Set up button at %s pin %d\n", myButton.port->name, myButton.pin);
-//     }
+class Buttons
+{
+public:
+	Buttons() : myState(0x00)
+	{
+		myInstance = this;
 
-// private:
-//     const struct gpio_dt_spec myButton;
-//     const Action myAction;
-//     struct gpio_callback myButtonCallback;
-//     static void ISR(const struct device *port,
-//                     struct gpio_callback *cb,
-//                     gpio_port_pins_t pins)
-//     {
-//         Button *button = CONTAINER_OF(cb, Button, myButtonCallback);
-//         button->QueueCommand();
-//     }
+		Button *encSwitch = new Button(GPIO_DT_SPEC_GET_OR(EncSwitch, gpios, {0}), ButtonBit::EncSwitch);
+		myButtons[ButtonBit::EncSwitch] = encSwitch;
 
-//     void QueueCommand()
-//     {
-//         enqueueCommand(&coilCommands[myAction]);
-//     }
-// };
+		Button *runF = new Button(GPIO_DT_SPEC_GET_OR(RunF, gpios, {0}), ButtonBit::RunF);
+		myButtons[ButtonBit::RunF] = runF;
+
+		Button *runR = new Button(GPIO_DT_SPEC_GET_OR(RunR, gpios, {0}), ButtonBit::RunR);
+		myButtons[ButtonBit::RunR] = runR;
+
+		Button *aclr = new Button(GPIO_DT_SPEC_GET_OR(ACLR, gpios, {0}), ButtonBit::ACLR);
+		myButtons[ButtonBit::ACLR] = aclr;
+
+		Button *jogF = new Button(GPIO_DT_SPEC_GET_OR(JogF, gpios, {0}), ButtonBit::JogF);
+		myButtons[ButtonBit::JogF] = jogF;
+
+		Button *jogR = new Button(GPIO_DT_SPEC_GET_OR(JogR, gpios, {0}), ButtonBit::JogR);
+		myButtons[ButtonBit::JogR] = jogR;
+
+		Button *eStop = new Button(GPIO_DT_SPEC_GET_OR(EStop, gpios, {0}), ButtonBit::EStop);
+		myButtons[ButtonBit::EStop] = eStop;
+
+		SyncState();
+	}
+
+	static void Receive(void *sub);
+
+	static Buttons *GetInstance()
+	{
+		if (myInstance == nullptr)
+		{
+			myInstance = new Buttons();
+		}
+		return myInstance;
+	}
+
+private:
+	void OnMessage(ButtonStateMsg *msg);
+
+	void SyncState();
+
+	int8_t myState;
+	static Buttons *myInstance;
+
+	ButtonList myButtons;
+
+	constexpr static const uint8_t numberOfButtons = static_cast<uint8_t>(ButtonBit::NUM_BUTTONS) - 1;
+};

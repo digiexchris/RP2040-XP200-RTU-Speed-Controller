@@ -8,4 +8,4 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(XP200_RTU_HID)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_sources(app PRIVATE src/main.cpp src/bus.cpp src/machine/machine.cpp src/modbus/modbus.cpp)
+target_sources(app PRIVATE src/main.cpp src/ui/button.cpp src/ui/buttonbus.cpp src/ui/buttons.cpp src/machine/machine.cpp src/modbus/modbus.cpp)
