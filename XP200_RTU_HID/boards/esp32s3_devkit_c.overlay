@@ -1,0 +1,146 @@
+/ {
+        // base pinctrl is include/zephyr/dt-bindings/pinctrl/esp32-pinctrl.h
+
+    //The lilygo T_CAN pins are:
+    // RS485
+// #define RS485_TX 22
+// #define RS485_RX 21
+// #define RS485_RE_PIN 17   //MAX13487E RE pin
+// #define RS485_SHUTDOWN_PIN 19 //MAX13487E shutdown pin
+// // WS2812B
+// #define WS2812B_DATA 4
+// // CAN
+// #define CAN_TX 27
+// #define CAN_RX 26
+// // RS485 and CAN Boost power supply
+// #define BOOST_ENABLE_PIN 16
+// //SD
+// #define SD_MISO 2
+// #define SD_MOSI 15
+// #define SD_SCLK 14
+// #define SD_CS 13
+
+//Free for I2C with this config: 32, 33
+
+        
+    buttons {
+        compatible = "zephyr,gpio-keys";
+
+
+        // speedA: speed_A {
+        //     gpios = <&gpio0 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     label = "SpeedA";
+        // };
+
+        // speedB: speed_B {
+        //     gpios = <&gpio0 7 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        //     label = "SpeedB";
+            
+        // };
+
+        encSwitch: enc_Switch {
+            status = "okay";
+            gpios = <&gpio0 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "EncSwitch";
+            debounce-interval = <10>;
+            // linux,code = <KEY_ENTER>;
+            
+        };
+
+        runF: run_F {
+            status = "okay";
+            gpios = <&gpio0 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "RunF";
+            debounce-interval = <10>;
+            // linux,code = <KEY_ARROW_RIGHT>;
+        };
+
+        runR: run_R {
+            status = "okay";
+            gpios = <&gpio0 18 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "RunR";
+            debounce-interval = <10>;
+            // linux,code = <KEY_ARROW_LEFT>;
+        };
+
+        jogf: jogF {
+            status = "okay";
+            gpios = <&gpio0 25 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "JogF";
+            debounce-interval = <10>;
+            // linux,code = <KEY_UP>;
+        };
+
+        jogr: jogR {
+            status = "okay";
+            gpios = <&gpio0 34 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "JogR";
+            debounce-interval = <10>;
+            // linux,code = <KEY_DOWN>;
+        };
+
+        estop: eStop {
+            status = "okay";
+            gpios = <&gpio0 35 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "EStop";
+            debounce-interval = <10>;
+            // linux,code = <KEY_ESC>;
+        };
+    };
+
+    
+// &uart0 {
+// 	current-speed = <115200>;
+// 	status = "okay";
+// 	pinctrl-0 = <&uart0_default>;
+// 	pinctrl-names = "default";
+// };
+
+   
+
+    chosen {
+		zephyr,modbus-serial = &myModbus;
+	};
+}; 
+
+&pinctrl {
+        uart1_default: uart1_default {
+            group1 {
+                pinmux = <UART1_RX_GPIO21>;
+                input-enable;
+                bias-pull-up;
+            };
+            group2 {
+                pinmux = <UART1_TX_GPIO22>;
+            };
+        };
+
+        i2c0_default: i2c0_default {
+            group1 {
+                pinmux = <I2C0_SDA_GPIO32>,
+                         <I2C0_SCL_GPIO33>;
+                bias-pull-up;
+                drive-open-drain;
+                output-high;
+            };
+        };
+    };
+
+&uart1 {
+        pinctrl-0 = <&uart1_default>;
+        pinctrl-names = "default";
+        current-speed = <115200>;
+        status = "okay";
+        myModbus: myModbus {
+            compatible = "zephyr,modbus-serial";
+            status = "okay";
+        };
+    };
+
+&i2c0 {
+        status = "okay";
+        pinctrl-0 = <&i2c0_default>;
+        pinctrl-names = "default";
+        clock-frequency = <400000>;
+    };
+    

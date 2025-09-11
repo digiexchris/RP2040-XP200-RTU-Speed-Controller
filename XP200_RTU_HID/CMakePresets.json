@@ -42,6 +42,24 @@
 			"cacheVariables": {
 				"BOARD": "rpi_pico"
 			}
+		},
+		{
+			"name": "esp32",
+			"displayName": "ESP32 Config",
+			"description": "ESP32 build",
+			"inherits": "default",
+			"cacheVariables": {
+				"BOARD": "esp32_devkitc/esp32/procpu"
+			}
+		},
+		{
+			"name": "esp32s3",
+			"displayName": "ESP32S3 Config",
+			"description": "ESP32S3 build",
+			"inherits": "default",
+			"cacheVariables": {
+				"BOARD": "esp32s3_devkitc"
+			}
 		}
 	],
 	"buildPresets": [

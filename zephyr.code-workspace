@@ -138,11 +138,15 @@
 		"editor.formatOnSave": true,
 		"C_Cpp.default.intelliSenseMode": "linux-clang-arm",
 		"C_Cpp.codeFolding": "disabled",
-		"devicetree.defaultBoard": "blackpill_f411ce",
-		"devicetree.bindings": [
-			"${zephyrBase}/dts/bindings",
-			"${zephyrBase}/../nrf/dts/bindings"
-		],
+		    "devicetree.defaultBoard": "esp32_devkitc",
+        "devicetree.west": "west",
+        "devicetree.zephyr": "/workspaces/zephyrproject/zephyr",
+        "devicetree.bindings": [
+
+
+            "${zephyrBase}/dts/bindings",
+            "${zephyrBase}/../nrf/dts/bindings"
+        ],
 		"[cpp]": {
 			"editor.defaultFormatter": "seaube.clangformat"
 		}
@@ -263,7 +267,7 @@
 				"description": "See https://docs.zephyrproject.org/latest/boards/index.html",
 				"options": [
 					"rpi_pico",
-					"stm32f411ceu6-blackpill",
+					"esp32_devkitc/esp32/procpu",
 					"qemu_cortex_m3"
 				]
 			},
