@@ -2,8 +2,8 @@
     {
       "name": "arm-zephyr-eabi",
       "compilers": {
-        "C": "/opt/toolchains/zephyr-sdk-0.17.3/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
-        "CXX": "/opt/toolchains/zephyr-sdk-0.17.3/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++"
+        "C": "/opt/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
+        "CXX": "/opt/zephyr-sdk-0.17.4/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++"
       },
       "isTrusted": true
     },

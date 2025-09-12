@@ -2,9 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "../zephyrproject/zephyr"
 		}
 	],
 	"settings": {
@@ -14,10 +11,6 @@
 			"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
 		},
 		"cmake.configureOnEdit": false,
-		"sonarlint.pathToCompileCommands": "/workspaces/local/build/compile_commands.json",
-		// IntelliSense
-		"C_Cpp.default.compilerPath": "/opt/toolchains/zephyr-sdk-0.17.3/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
-		"C_Cpp.default.compileCommands": "/workspaces/local/build/compile_commands.json",
 		// File Associations
 		"files.associations": {
 			"algorithm": "cpp",
@@ -125,11 +118,7 @@
 			"iar"
 		],
 		"cmake.options.statusBarVisibility": "visible",
-		"cmake.additionalKits": [
-			"/workspaces/local/.devcontainer/cmake.kits.json"
-		],
 		"cmake.sourceDirectory": "${workspaceFolder}/local/XP200_RTU_HID",
-		"cortex-debug.armToolchainPath": "/opt/toolchains/zephyr-sdk-0.17.3/arm-zephyr-eabi/bin",
 		"cortex-debug.armToolchainPrefix": "arm-none-eabi",
 		"cortex-debug.openocdPath": "/usr/bin/openocd",
 		"cortex-debug.variableUseNaturalFormat": true,
@@ -138,15 +127,13 @@
 		"editor.formatOnSave": true,
 		"C_Cpp.default.intelliSenseMode": "linux-clang-arm",
 		"C_Cpp.codeFolding": "disabled",
-		    "devicetree.defaultBoard": "esp32_devkitc",
-        "devicetree.west": "west",
-        "devicetree.zephyr": "/workspaces/zephyrproject/zephyr",
-        "devicetree.bindings": [
-
-
-            "${zephyrBase}/dts/bindings",
-            "${zephyrBase}/../nrf/dts/bindings"
-        ],
+		"devicetree.defaultBoard": "esp32_devkitc",
+		"devicetree.west": "west",
+		"devicetree.zephyr": "zephyr",
+		// "devicetree.bindings": [
+		//     "${zephyrBase}/dts/bindings",
+		//     "${zephyrBase}/../nrf/dts/bindings"
+		// ],
 		"[cpp]": {
 			"editor.defaultFormatter": "seaube.clangformat"
 		}
@@ -215,7 +202,7 @@
 				"command": "openocd",
 				"args": [
 					"-s",
-					"/workspaces/zephyrproject/zephyr/boards/weact/blackpill_f411ce/support",
+					"/workspaces/local/zephyr/boards/weact/blackpill_f411ce/support",
 					"-s",
 					"/opt/toolchains/zephyr-sdk-0.16.5/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts",
 					"-f",

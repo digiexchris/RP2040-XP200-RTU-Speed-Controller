@@ -1,0 +1,64 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json
+{
+    "name": "vscode-zephyr",
+    // build with Dockerfile and args
+    // see also https://aka.ms/vscode-remote/containers/non-root.
+    "dockerFile": "Dockerfile",
+    "context": "../",
+    "build": {
+        "args": {
+            "TARGET": "supported-targets",
+            "TOOLCHAIN": "arm-zephyr-eabi",
+            "ZSDK_VERSION": "0.17.4",
+            "WEST_MANIFEST": ".manifests/west-supported-targets.yml"
+        }
+    },
+    //"remoteUser": "user", 
+    // The optional 'runArgs' property can be used to specify additional runtime arguments.
+    "runArgs": [
+        "-v",
+        "/dev:/dev", //
+        "--privileged" // allows access to tty* devices
+    ],
+    // https://code.visualstudio.com/remote/advancedcontainers/change-default-source-mount
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/user/workspace,type=bind",
+    "workspaceFolder": "/home/user/workspace",
+    // see https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount
+    // mount local folder that are external to the workspace
+    "mounts": [
+        //"source=${env:HOME}/research-zephyr/samples,target=${containerWorkspaceFolder}/samples,type=bind,consistency=cached"
+    ],
+    // make a list of ports inside the container available locally
+    "forwardPorts": [],
+    // Configure tool-specific properties.
+    // https://code.visualstudio.com/docs/remote/devcontainerjson-reference#_vs-code-specific-properties
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "extensions.ignoreRecommendations": true
+            },
+            "extensions": [
+                // core
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "seaube.clangformat",
+                // zephyr
+                // extpack incl: devicetree, kconfig, link map, cmake
+                // NOTE: later versions are broken
+                "nordic-semiconductor.nrf-connect@2024.3.25",
+                "nordic-semiconductor.nrf-devicetree@2024.6.20",
+                "nordic-semiconductor.nrf-connect-extension-pack",
+                // debug
+                "mcu-debug.debug-tracker-vscode", // needed by cortex-debug
+                "marus25.cortex-debug",
+                "ms-vscode.vscode-serial-monitor",
+                // editing
+                "stkb.rewrap",
+                "wayou.vscode-todo-highlight",
+                // task utils
+                "augustocdias.tasks-shell-input" // MANDATORY for dynamic task input
+            ]
+        }
+    }
+}

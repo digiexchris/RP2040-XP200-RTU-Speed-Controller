@@ -31,7 +31,8 @@
 			"description": "xtensa sim build",
 			"inherits": "default",
 			"cacheVariables": {
-				"BOARD": "qemu_xtensa/dc233c "
+				"BOARD": "qemu_xtensa",
+				"ZEPHYR_TOOLCHAIN_VARIANT": "zephyr"
 			}
 		},
 		{
@@ -58,7 +59,7 @@
 			"description": "ESP32S3 build",
 			"inherits": "default",
 			"cacheVariables": {
-				"BOARD": "esp32s3_devkitc"
+				"BOARD": "esp32s3_devkitc/esp32s3/procpu"
 			}
 		}
 	],

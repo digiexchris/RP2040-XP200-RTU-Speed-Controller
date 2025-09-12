@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
 ## Arguments
-ARG ZSDK_VERSION=0.17.3
+ARG ZSDK_VERSION=0.17.4
 ARG LLVM_VERSION=14
 ARG WGET_ARGS="-q --show-progress --progress=bar:force:noscroll --no-check-certificate"
 
@@ -14,7 +14,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN	apt-get -y update && \
     #apt-get -y upgrade && \
     apt-get install --no-install-recommends -y \
-    python3-pip cmake git gpg-agent libncurses5 locales \
+    python3-pip python3-wheel python3.10-venv cmake git gpg-agent libncurses5 locales \
     lsb-release make ninja-build device-tree-compiler software-properties-common \
     ssh sudo unzip wget xz-utils \
     gperf build-essential libc6-dev openocd clang-format clangd \
@@ -52,18 +52,34 @@ RUN wget https://raw.githubusercontent.com/Sarcasm/run-clang-format/master/run-c
 # https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.5/zephyr-sdk-0.16.5_linux-x86_64.tar.xz
 
 ## Zephyr SDK (only arm toolchain)
-RUN mkdir -p /opt/toolchains && wget ${WGET_ARGS} https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz && \
-    tar -xf "zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz" -C /opt/toolchains && \
-    rm "zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz"
+# RUN mkdir -p /opt/toolchains && wget ${WGET_ARGS} https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz && \
+#     tar -xf "zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz" -C /opt/toolchains && \
+#     rm "zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz"
 
+#Zephyr SDK (From 2025 getting started)
+RUN cd /opt && \
+wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz && \
+wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/sha256.sum | shasum --check --ignore-missing && \
+tar xvf zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz && \
+cd zephyr-sdk-${ZSDK_VERSION} && \
+./setup.sh -t arm-zephyr-eabi -t xtensa-espressif_esp32_zephyr-elf -t xtensa-espressif_esp32s2_zephyr-elf -t xtensa-espressif_esp32s3_zephyr-elf -t x86_64-zephyr-elf -h -c && \
+rm /opt/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64.tar.xz
 ## Zephyr
-RUN west init /workspaces/zephyrproject && \
-    cd /workspaces/zephyrproject && \
-    west update && \
-    west zephyr-export && \
-    pip3 install --no-cache-dir -r /workspaces/zephyrproject/zephyr/scripts/requirements.txt && \
-    rm -rf $(pip cache dir) && \
-    mkdir -m777 /workspaces/zephyrproject/zephyr/.cache 
+# RUN 
+# python3 -m venv /workspaces/zephyrproject/.venv && \
+#     source /workspaces/zephyrproject/.venv/bin/activate && \
+#     pip install west && \
+#     west init /workspaces/zephyrproject && \
+#     cd /workspaces/zephyrproject && \
+#     west update && \
+#     west zephyr-export && \
+#     # export BOARD=esp32_devkitc/esp32/procpu && \
+#     # west packages pip --install && \
+#     pip3 install -r /workspaces/zephyrproject/zephyr/scripts/requirements.txt && \
+#     west packages pip --install && \
+#     west sdk install --toolchains arm-zephyr-eabi  && \ 
+#     # rm -rf $(pip cache dir) && \
+#     mkdir -m777 /workspaces/zephyrproject/zephyr/.cache 
 #&& \
 #chown -R user:user /workspaces/zephyrproject
 
@@ -90,13 +106,29 @@ RUN git clone https://github.com/magicmonty/bash-git-prompt.git /home/user/.bash
     source $HOME/.bash-git-prompt/gitprompt.sh \n \
     fi\n' >> /home/user/.bashrc && \
     echo '\n \
-    source /workspaces/zephyrproject/zephyr/zephyr-env.sh \
+    source /workspaces/local/zephyr/zephyr-env.sh \
     \n' >> /home/user/.bashrc && \
-    git config --global --add safe.directory /workspaces/zephyrproject/zephyr
+    git config --global --add safe.directory /workspaces/local/zephyr
 
 # Set environment variables
 ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-ENV ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${ZSDK_VERSION}
-ENV GNUARMEMB_TOOLCHAIN_PATH=/opt/toolchains/${GCC_ARM_NAME}
+ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${ZSDK_VERSION}
+# ENV GNUARMEMB_TOOLCHAIN_PATH=/opt/toolchains/${GCC_ARM_NAME}
 ENV PKG_CONFIG_PATH=/usr/lib/i386-linux-gnu/pkgconfig
-ENV ZEPHYR_BASE=/workspaces/zephyrproject/zephyr
+ENV ZEPHYR_BASE=/workspaces/local/zephyr
+
+
+
+RUN mkdir -p /workspaces/local
+WORKDIR /workspaces/local
+COPY ../west.yaml /workspaces/local/west.yml
+
+RUN west init -l local && \
+    west update && \
+    west zephyr-export 
+    # && \
+    # pip3 install -r /workspaces/local/zephyr/scripts/requirements.txt && \
+    # west packages pip --install && \
+    # west sdk install --toolchains arm-zephyr-eabi xtensa-espressif_esp32_zephyr-elf xtensa-espressif_esp32s2_zephyr-elf xtensa-espressif_esp32s3_zephyr-elf x86_64-zephyr-elf && \
+    # rm -rf $(pip cache dir) && \
+    # mkdir -m777 /workspaces/local/zephyr/.cache

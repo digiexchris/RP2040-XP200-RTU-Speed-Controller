@@ -11,3 +11,9 @@ qemu.pid
 flash.bin
 firmware.bin
 .cache/
+zephyr/
+bootloader/
+modules/
+tools/
+.venv/
+bak/

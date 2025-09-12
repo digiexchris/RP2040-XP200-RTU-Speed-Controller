@@ -1,0 +1,19 @@
+# Example T2 west.yml, using manifest imports.
+manifest:
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: v4.2.0
+      import: true
+      # import:
+      #   name-allowlist:
+      #     - hal_espressif
+      #     - cmsis
+      #     - hal_rpi_pico
+      #     - hal_stm32
+  self:
+    path: local
+
