@@ -2,6 +2,7 @@
     //"image": "ghcr.io/zephyrproject-rtos/zephyr-build:latest",
     "dockerFile": "Dockerfile",
     "name": "Zephyr",
+    "context": "..", // Set context to project root
     "runArgs": [
         "--privileged"
     ],
@@ -12,7 +13,7 @@
         }
     },
     "containerEnv": {
-        "ZEPHYR_BASE": "/workspaces/local/zephyr",
+        // "ZEPHYR_BASE": "/workspaces/zephyr",
         "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr"
     },
     // "remoteUser": "user",

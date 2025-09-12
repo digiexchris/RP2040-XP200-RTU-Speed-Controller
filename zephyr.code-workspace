@@ -118,7 +118,7 @@
 			"iar"
 		],
 		"cmake.options.statusBarVisibility": "visible",
-		"cmake.sourceDirectory": "${workspaceFolder}/local/XP200_RTU_HID",
+		"cmake.sourceDirectory": "${workspaceFolder}",
 		"cortex-debug.armToolchainPrefix": "arm-none-eabi",
 		"cortex-debug.openocdPath": "/usr/bin/openocd",
 		"cortex-debug.variableUseNaturalFormat": true,

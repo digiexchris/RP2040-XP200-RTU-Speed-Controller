@@ -115,13 +115,13 @@ ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${ZSDK_VERSION}
 # ENV GNUARMEMB_TOOLCHAIN_PATH=/opt/toolchains/${GCC_ARM_NAME}
 ENV PKG_CONFIG_PATH=/usr/lib/i386-linux-gnu/pkgconfig
-ENV ZEPHYR_BASE=/workspaces/local/zephyr
+# ENV ZEPHYR_BASE=/workspaces/local/zephyr
 
 
 
 RUN mkdir -p /workspaces/local
-WORKDIR /workspaces/local
-COPY ../west.yaml /workspaces/local/west.yml
+WORKDIR /workspaces
+COPY west.yml /workspaces/local/west.yml
 
 RUN west init -l local && \
     west update && \
@@ -132,3 +132,5 @@ RUN west init -l local && \
     # west sdk install --toolchains arm-zephyr-eabi xtensa-espressif_esp32_zephyr-elf xtensa-espressif_esp32s2_zephyr-elf xtensa-espressif_esp32s3_zephyr-elf x86_64-zephyr-elf && \
     # rm -rf $(pip cache dir) && \
     # mkdir -m777 /workspaces/local/zephyr/.cache
+
+WORKDIR /workspaces/local

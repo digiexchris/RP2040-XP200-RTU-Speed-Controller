@@ -7,13 +7,13 @@ manifest:
     - name: zephyr
       remote: zephyrproject-rtos
       revision: v4.2.0
-      import: true
-      # import:
-      #   name-allowlist:
-      #     - hal_espressif
-      #     - cmsis
-      #     - hal_rpi_pico
-      #     - hal_stm32
+      # import: true
+      import:
+        name-allowlist:
+          - hal_espressif
+          - cmsis
+          - hal_rpi_pico
+          - hal_stm32
   self:
     path: local
 

@@ -1,6 +1,6 @@
 {
     "cmake.languageSupport.enableFileAPI": true,
-    "cmake.sourceDirectory": "${workspaceFolder}/XP200_RTU_HID",
+    // "cmake.sourceDirectory": "${workspaceFolder}/XP200_RTU_HID",
     "devicetree.defaultBoard": "esp32_devkitc",
     "devicetree.west": "west",
     "devicetree.zephyr": "${workspaceFolder}/zephyr",
